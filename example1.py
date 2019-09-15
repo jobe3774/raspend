@@ -24,6 +24,8 @@ class DoorBell():
         pass
     def switchDoorBell(self, onoff):
         return f"invoked switchDoorBell(onoff={onoff})"
+    def getCurrentState(self):
+        return "invoked getCurrentState()"
 
 def main():
     logging.basicConfig(filename='raspend_example.log', level=logging.INFO)
@@ -74,6 +76,7 @@ def main():
 
         # Add some methods to the command map.
         cmdMap.add(CommandMapping.Command(theDoorBell.switchDoorBell))
+        cmdMap.add(CommandMapping.Command(theDoorBell.getCurrentState))
 
         # The HTTP server thread - our HTTP interface
         httpd = RaspendHTTPServerThread(shutdownFlag, dataLock, dataDict, cmdMap, args.port)
