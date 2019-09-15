@@ -195,9 +195,9 @@ class RaspendHttpRequestHandler(BaseHTTPRequestHandler):
                 self.send_error(501, "No commands available.")
             else:
                 strJsonResponse = self.onGetCmds()
-        elif self.path == "/":
+        elif self.path == "/" and self.dataDict != None:
             strJsonResponse = self.onGetRootPath()
-        elif len(self.path) > 1:
+        elif len(self.path) > 1  and self.dataDict != None:
             strJsonResponse = self.onGetDetailedPath()
         else:
             self.send_error(404)

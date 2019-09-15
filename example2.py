@@ -9,21 +9,16 @@ import raspend.utils.serviceshutdownhandling as ServiceShutdownHandling
 import raspend.utils.dataacquisition as DataAcquisition
 import raspend.utils.commandmapping as CommandMapping
 
-class DoorBell():
-    def __init__(self, *args, **kwargs):
-        self.doorBellState = "on"
+class myDataAcquisitionHandler(DataAcquisition.DataAcquisitionHandler):
+    def __init__(self, name, dataDict = None):
+        self.name = name
+        return super().__init__(dataDict)
 
-    def switchDoorBell(self, onoff):
-        if type(onoff) == str:
-            self.doorBellState = "on" if onoff == "on" else "off"
-        elif type(onoff) == int:
-            self.doorBellState = "on" if onoff >= 1 else "off"
+    def acquireData(self):
+        if not self.name in self.dataDict:
+            self.dataDict[self.name] = {"loop" : 1}
         else:
-            raise TypeError("State must be 'int' or 'string'.")
-        return self.doorBellState
-
-    def getCurrentState(self):
-        return self.doorBellState
+            self.dataDict[self.name]["loop"] += 1
 
 def main():
     logging.basicConfig(filename='raspend_example.log', level=logging.INFO)
@@ -55,21 +50,22 @@ def main():
         # A lock object for synchronizing access to data within acquistion handlers and the HTTP request handler.
         dataLock = threading.Lock()
 
-        # Create some objects whose methods we want to expose via HTTP interface.
-        theDoorBell = DoorBell()
-
-        # Create a command map for the HTTP interface, so that it knows which commands are available for calling via HTTP POST request.
-        # Use 'http://server:port/cmds' to get a list of commands as a JSON string.
-        cmdMap = CommandMapping.CommandMap()
-
-        # Add some methods to the command map.
-        cmdMap.add(CommandMapping.Command(theDoorBell.switchDoorBell))
-        cmdMap.add(CommandMapping.Command(theDoorBell.getCurrentState))
+        # This handler is called by the data acquisition thread. 
+        # Here you fill 'dataDict' with the data you want to expose via HTTP as a JSON string.
+        # Make sure your data is serializable, otherwise the request handler will fail.
+        dataGetter1 = myDataAcquisitionHandler("dataGetter1", dataDict)
+        dataGetter2 = myDataAcquisitionHandler("dataGetter2", dataDict)
+    
+        # Start threads for acquiring some data.
+        dataThread1 = DataAcquisition.DataAcquisitionThread(3, shutdownFlag, dataLock, dataGetter1)
+        dataThread2 = DataAcquisition.DataAcquisitionThread(5, shutdownFlag, dataLock, dataGetter2)
 
         # The HTTP server thread - our HTTP interface
-        httpd = RaspendHTTPServerThread(shutdownFlag, dataLock, dataDict, cmdMap, args.port)
+        httpd = RaspendHTTPServerThread(shutdownFlag, dataLock, dataDict, None, args.port)
 
-        # Start thread.
+        # Start our threads.
+        dataThread1.start()
+        dataThread2.start()
         httpd.start()
 
         # Keep primary thread alive.
@@ -79,7 +75,9 @@ def main():
     except ServiceShutdownHandling.ServiceShutdownException:
         # Signal the shutdown flag, so the threads can quit their work.
         shutdownFlag.set()
-        # Wait for thread to end.
+        # Wait for all thread to end.
+        dataThread1.join()
+        dataThread2.join()
         httpd.join()
 
     except Exception as e:

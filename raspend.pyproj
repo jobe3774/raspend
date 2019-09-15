@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{d0fd4413-717c-4da2-b189-4cc8bdecbc68}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>example1.py</StartupFile>
+    <StartupFile>example2.py</StartupFile>
     <SearchPath />
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
@@ -22,7 +22,11 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="example1.py" />
+    <Compile Include="example2.py" />
     <Compile Include="raspend\http.py" />
+    <Compile Include="raspend\setup.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="raspend\utils\commandmapping.py" />
     <Compile Include="raspend\utils\dataacquisition.py" />
     <Compile Include="raspend\utils\serviceshutdownhandling.py" />
@@ -33,6 +37,10 @@
   <ItemGroup>
     <Folder Include="raspend" />
     <Folder Include="raspend\utils" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="raspend\LICENSE" />
+    <Content Include="raspend\README.md" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
 </Project>
