@@ -144,7 +144,7 @@ class RaspendHttpRequestHandler(BaseHTTPRequestHandler):
 
         return
 
-    def onGetRootPath(self):
+    def onGetRootDataPath(self):
         """ Called when / is requested and dumps the given 'dataDict' completly.
         """
         self.dataLock.acquire()
@@ -152,7 +152,7 @@ class RaspendHttpRequestHandler(BaseHTTPRequestHandler):
         self.dataLock.release()
         return strJsonResponse
                 
-    def onGetDetailedPath(self):
+    def onGetDetailedDataPath(self):
         """ Called when a more detailed path is requested. This allows you to request sub-elements of 'dataDict'.
         """
         pathParts = self.path.split('/')
@@ -184,9 +184,9 @@ class RaspendHttpRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         """ Handle HTTP GET request
 
-            '/'            : returns the whole 'dataDict' as JSON string
-            '/key/.../key' : returns sub-element of 'dataDict' as JSON string
-            '/cmds'        : returns the list of available commands
+            '/data'     : returns the whole 'dataDict' as JSON string
+            '/data/key' : returns sub-element of 'dataDict' as JSON string
+            '/cmds'     : returns the list of available commands
         """
         strJsonResponse = ""
         
@@ -195,10 +195,10 @@ class RaspendHttpRequestHandler(BaseHTTPRequestHandler):
                 self.send_error(501, "No commands available.")
             else:
                 strJsonResponse = self.onGetCmds()
-        elif self.path == "/" and self.dataDict != None:
-            strJsonResponse = self.onGetRootPath()
-        elif len(self.path) > 1  and self.dataDict != None:
-            strJsonResponse = self.onGetDetailedPath()
+        elif self.path == "/data" and self.dataDict != None:
+            strJsonResponse = self.onGetRootDataPath()
+        elif self.path.startswith("/data/")  and self.dataDict != None:
+            strJsonResponse = self.onGetDetailedDataPath()
         else:
             self.send_error(404)
             return

@@ -8,7 +8,7 @@ setuptools.setup(
     version="0.0.1",
     author="Joerg Beckers",
     author_email="pypi@jobe-software.de",
-    description="A tiny HTTP backend framework for the Raspberry Pi",
+    description="An easy to use and small HTTP backend framework for the Raspberry Pi",
     license="MIT",
     long_description=long_description,
     long_description_content_type="text/markdown",

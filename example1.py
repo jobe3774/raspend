@@ -79,6 +79,7 @@ def main():
     except ServiceShutdownHandling.ServiceShutdownException:
         # Signal the shutdown flag, so the threads can quit their work.
         shutdownFlag.set()
+        print ("Shutting down...")
         # Wait for thread to end.
         httpd.join()
 
