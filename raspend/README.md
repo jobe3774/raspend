@@ -6,11 +6,11 @@ As you can imagine **raspend** is the abbreviation for **rasp**berry back**end**
 
 ## Motivation
 
-Since I am doing a lot of home automation stuff on the Raspberry Pi and since the third Python script for that had the same structure, I decided to create an easy to use framework to simplify my life for when I start my next project on my RPi.
+Since I am doing a lot of home automation stuff on the Raspberry Pi and since the third Python script for that had the same structure, I decided to create an easy to use framework to simplify my life for when I start my next project on my RPi. Further I just wanted to strengthen my Python skills. This is why I didn't use any of the available frameworks such as flask or wsgiref.
 
 ## Now, what does this framework provide?
 
-As 'backend' already suggests it, this framework provides you with an easy way of creating a small HTTP web service on your RPi. Besides that, it provides you also with an easy way of acquiring data (e.g. temperatures measurements) in a multithreaded way.
+As 'backend' already suggests it, this framework provides you with an easy way of creating a small HTTP web service on your RPi. The **RaspendHTTPServerThread** class is based on Python's **HTTPServer** class which is executed in its own thread. Besides that, it provides you also with an easy way of acquiring data (e.g. temperatures measurements) in a multithreaded way.
 
 The one idea is that the data acquisition threads you write all use a shared dictionary to store their data. The HTTP server thread knows this dictionary too and exposes it as a JSON string via HTTP GET requests.
 
@@ -42,7 +42,7 @@ dataThread1.start()
 httpd.start()
 ```
 
-The other idea was it to expose different functionalities, such as switching a light bulb via GPIO, as a command you can send to your RPi via HTTP POST request. All you have to do is to encapsulate the functionality you want to make available to the outside world into a method of a Python class. Then instantiate your class and create a new **Command** object to which you pass your method. In another step, add this **Command** object to a so-called **CommandMap**. You then pass this **CommandMap** in the constructor to the instance of your **RaspendHTTPServerThread**. Now you can execute your method using a simple HTTP-POST request. 
+The other idea was it to expose different functionalities, such as switching a light bulb via GPIO, as a command you can send to your RPi via HTTP POST request. All you have to do is to encapsulate the functionality you want to make available to the outside world into a method of a Python class. Then instantiate your class and create a new **Command** object to which you pass your method. In another step, add this **Command** object to the so-called **CommandMap**. You then pass this **CommandMap** in the constructor to the instance of your **RaspendHTTPServerThread**. Now you can execute your method using a simple HTTP-POST request. 
 
 ``` python
 from raspend.http import RaspendHTTPServerThread
@@ -78,7 +78,7 @@ httpd = RaspendHTTPServerThread(shutdownFlag, dataLock, dataDict, cmdMap, args.p
 httpd.start()
 ``` 
 
-Please have a look at the examples in this project to get a better understanding.
+Please have a look at the examples included in this project to get a better understanding.
 
 ## How to use the HTTP interface?
 
@@ -119,5 +119,88 @@ Or if you only want to know the temperature of the fitness room in your basement
 
 ### The command part
 
+Now lets have a look at the command interface of **raspend**. If you want to know which commands are available you can request **/cmds**. Then the response for the above mentioned example would be:
+
+```
+{
+  "Commands": [{
+      "Command": {
+          "Name": "theDoorBell.switchDoorBell",
+          "Args": {
+              "onoff": ""
+          }
+      }
+  }, {
+      "Command": {
+          "Name": "theDoorBell.getCurrentState",
+          "Args": {}
+      }
+  }]
+}
+```
+
+As you can see in the response above, your variable names should be in a more descriptive manner, since the instance of your Python class is used instead of the class name. 
+
+You invoke a command by sending it's call information as described in the list above via HTTP-POST request. Here an JavaScript example:
+
+``` javascript
+
+let payload = {
+    Command : {
+        Name : "theDoorBell.switchDoorBell",
+        Args : {
+            onoff : "off"
+        }
+    }
+};
+
+let response = await fetch(theUrl, {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json; charset=utf-8'
+    },
+    body: JSON.stringify(payload)
+});
+
+if (response.status == 200)
+{
+    let responsePayload = await response.json();
+    console.log(responsePayload);
+}
+    
+``` 
+
+The **RaspendHTTPServerThread** receives
+
+``` 
+{
+  "Command": {
+    "Name": "theDoorBell.switchDoorBell",
+    "Args": {
+       "onoff": "off"
+    }
+  }
+}
+``` 
+
+and invokes the method. The response of this HTTP-POST request will be your JSON enhanced with the result of the method invocation:
+
+``` 
+{
+  "Command": {
+    "Name": "theDoorBell.switchDoorBell",
+    "Args": {
+       "onoff": "off"
+    },
+    "Result": "off"
+  }
+}
+``` 
+
+Any other information contained in your JSON data will stay untouched. So you can attach any other information with that command such as an element-id of your frontend invoking it.
+
 ## How to install?
 
+```
+   pip install raspend
+```
