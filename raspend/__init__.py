@@ -5,5 +5,5 @@
 #  
 #  Copyright (c) 2019 Joerg Beckers
 
-name = "raspend"
+name = "raspend_http"
 __all__ = ["raspend_http"]

@@ -6,3 +6,8 @@
 /raspend/build/lib/utils
 /raspend/dist
 /raspend/raspend.egg-info
+/.vs
+/raspend/__pycache__
+/build/lib/raspend
+/dist
+/raspend.egg-info

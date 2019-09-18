@@ -24,7 +24,7 @@
     <Compile Include="example1.py" />
     <Compile Include="example2.py" />
     <Compile Include="raspend\raspend_http.py" />
-    <Compile Include="raspend\setup.py">
+    <Compile Include="setup.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="raspend\utils\commandmapping.py" />
@@ -39,8 +39,7 @@
     <Folder Include="raspend\utils" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="raspend\LICENSE" />
-    <Content Include="raspend\README.md" />
+    <Content Include="LICENSE" />
     <Content Include="README.md" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
