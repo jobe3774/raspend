@@ -10,7 +10,7 @@ Since I am doing a lot of home automation stuff on the Raspberry Pi and since th
 
 ## Now, what does this framework provide?
 
-As 'backend' already suggests it, this framework provides you with an easy way of creating a small HTTP web service on your RPi. The **RaspendHTTPServerThread** class is based on Python's **HTTPServer** class which is executed in its own thread. Besides that, it provides you also with an easy way of acquiring data (e.g. temperatures measurements) in a multithreaded way.
+As 'backend' already suggests it, this framework provides you with an easy way of creating a small HTTP web service on your RPi. The **RaspendHTTPServerThread** class is based on Python's **HTTPServer** class and it is executed in its own thread. Besides that, it provides you also with an easy way of acquiring data (e.g. temperatures measurements) in a multithreaded way.
 
 The one idea is that the data acquisition threads you write all use a shared dictionary to store their data. The HTTP server thread knows this dictionary too and exposes it as a JSON string via HTTP GET requests.
 
@@ -86,7 +86,7 @@ Please have a look at the examples included in this project to get a better unde
 
 As mentioned above, the data acquisition side of your web service writes its data to a shared dictionary you provide it with. You can query this data by sending a HTTP GET request to **http://<your-raspberrypi's-ip:port>/data**. Your **RaspendHTTPServerThread** then sends the whole shared dictionary as a JSON string. 
 
-Lets say you are measuring the temperatures of different rooms of your house's floors, then the shared dictionary could have the following structure:
+Let's say you are measuring the temperatures of different rooms of your house's floors, then the shared dictionary could have the following structure:
 
 ```
 {
@@ -102,7 +102,7 @@ Lets say you are measuring the temperatures of different rooms of your house's f
 }
 ```
 
-If you only want to know the temperatures for the ground floor you can request **/data/ground_floor**. Then the response would be:
+If you only want to know the temperatures of the ground floor you can request **/data/ground_floor**. Then the response would be:
 
 ```
 "ground_floor" : {
@@ -119,7 +119,7 @@ Or if you only want to know the temperature of the fitness room in your basement
 
 ### The command part
 
-Now lets have a look at the command interface of **raspend**. If you want to know which commands are available you can request **/cmds**. Then the response for the above mentioned example would be:
+Now let's have a look at the command interface of **raspend**. If you want to know which commands are available you can request **/cmds**. Then the response for the above mentioned example would be:
 
 ```
 {
@@ -182,7 +182,7 @@ The **RaspendHTTPServerThread** receives
 }
 ``` 
 
-and invokes the method. The response of this HTTP-POST request will be your JSON enhanced with the result of the method invocation:
+and invokes the method. The response of this HTTP POST request will be your JSON enhanced with the result of the method invocation:
 
 ``` 
 {
@@ -195,8 +195,7 @@ and invokes the method. The response of this HTTP-POST request will be your JSON
   }
 }
 ``` 
-
-Any other information contained in your JSON data will stay untouched. So you can attach any other information with that command such as an element-id of your frontend invoking it.
+Since remain untouched, you can attach any other information with that command such as an element-id of your frontend invoking it.
 
 ## How to install?
 
