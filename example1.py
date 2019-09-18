@@ -1,3 +1,12 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+#  raspend - Example
+#  
+#  License: MIT
+#  
+#  Copyright (c) 2019 Joerg Beckers
+
 import logging
 import threading
 import argparse

@@ -1,3 +1,10 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#  
+#  License: MIT
+#  
+#  Copyright (c) 2019 Joerg Beckers
+
 import setuptools
 
 with open("README.md", "r") as fh:
@@ -5,10 +12,10 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="raspend",
-    version="0.0.1",
+    version="0.9.8",
     author="Joerg Beckers",
     author_email="pypi@jobe-software.de",
-    description="An easy to use and small HTTP backend framework for the Raspberry Pi",
+    description="A small and easy to use HTTP backend framework for the Raspberry Pi which is ideal for small to medium-sized home automation projects.",
     license="MIT",
     long_description=long_description,
     long_description_content_type="text/markdown",

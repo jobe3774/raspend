@@ -1,4 +1,4 @@
-# raspend - a small HTTP backend framework for the Raspberry Pi
+# raspend - a small and easy to use HTTP backend framework for the Raspberry Pi
 
 First of all, it should be mentioned that **raspend** was originally intended to be a backend framework for the Raspberry Pi, but since it was written entirely in Python, it can be used on any platform with a Python interpreter. 
 

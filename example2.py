@@ -1,3 +1,12 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+#  raspend - Example
+#  
+#  License: MIT
+#  
+#  Copyright (c) 2019 Joerg Beckers
+
 import logging
 import threading
 import argparse
@@ -7,7 +16,6 @@ import os
 from raspend.http import RaspendHTTPServerThread
 import raspend.utils.serviceshutdownhandling as ServiceShutdownHandling
 import raspend.utils.dataacquisition as DataAcquisition
-import raspend.utils.commandmapping as CommandMapping
 
 class myDataAcquisitionHandler(DataAcquisition.DataAcquisitionHandler):
     def __init__(self, name, dataDict = None):
