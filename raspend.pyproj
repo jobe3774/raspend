@@ -41,6 +41,7 @@
   <ItemGroup>
     <Content Include="raspend\LICENSE" />
     <Content Include="raspend\README.md" />
+    <Content Include="README.md" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
 </Project>
