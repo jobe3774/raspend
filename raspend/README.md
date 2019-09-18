@@ -42,7 +42,7 @@ dataThread1.start()
 httpd.start()
 ```
 
-The other idea was it to expose different functionalities, such as switching a light bulb via GPIO, as a command you can send to your RPi via HTTP POST request. All you have to do is to encapsulate the functionality you want to make available to the outside world into a method of a Python class. Then instantiate your class and create a new **Command** object to which you pass your method. In another step, add this **Command** object to the so-called **CommandMap**. You then pass this **CommandMap** in the constructor to the instance of your **RaspendHTTPServerThread**. Now you can execute your method using a simple HTTP-POST request. 
+The other idea was it to expose different functionalities, such as switching a light bulb via GPIO, as a command you can send to your RPi via HTTP POST request. All you have to do is to encapsulate the functionality you want to make available to the outside world into a method of a Python class. Then instantiate your class and create a new **Command** object to which you pass your method. In another step, add this **Command** object to the so-called **CommandMap**. You then pass this **CommandMap** in the constructor to the instance of your **RaspendHTTPServerThread**. Now you can execute your method using a simple HTTP POST request. 
 
 ``` python
 from raspend.http import RaspendHTTPServerThread
@@ -141,7 +141,7 @@ Now lets have a look at the command interface of **raspend**. If you want to kno
 
 As you can see in the response above, your variable names should be in a more descriptive manner, since the instance of your Python class is used instead of the class name. 
 
-You invoke a command by sending it's call information as described in the list above via HTTP-POST request. Here an JavaScript example:
+You invoke a command by sending it's call information as described in the list above via HTTP POST request. Here an JavaScript example:
 
 ``` javascript
 
