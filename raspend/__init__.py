@@ -6,4 +6,4 @@
 #  Copyright (c) 2019 Joerg Beckers
 
 name = "raspend"
-__all__ = ["http"]
+__all__ = ["raspend_http"]

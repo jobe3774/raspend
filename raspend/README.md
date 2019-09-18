@@ -17,7 +17,7 @@ The one idea is that the data acquisition threads you write all use a shared dic
 By the way, you only need to write a handler deriving the **DataAcquisitionHandler** class and provide it to the respective instance of **DataAcquisitionThread**.
 
 ``` python
-from raspend.http import RaspendHTTPServerThread
+from raspend.raspend_http import RaspendHTTPServerThread
 import raspend.utils.dataacquisition as DataAcquisition
 
 class myDataAcquisitionHandler(DataAcquisition.DataAcquisitionHandler):
@@ -146,10 +146,10 @@ You invoke a command by sending it's call information as described in the list a
 ``` javascript
 
 let payload = {
-    Command : {
-        Name : "theDoorBell.switchDoorBell",
-        Args : {
-            onoff : "off"
+    Command: {
+        Name: "theDoorBell.switchDoorBell",
+        Args: {
+            onoff: "off"
         }
     }
 };
@@ -162,8 +162,7 @@ let response = await fetch(theUrl, {
     body: JSON.stringify(payload)
 });
 
-if (response.status == 200)
-{
+if (response.status == 200) {
     let responsePayload = await response.json();
     console.log(responsePayload);
 }
@@ -201,6 +200,14 @@ Any other information contained in your JSON data will stay untouched. So you ca
 
 ## How to install?
 
+Make sure you have installed Python 3.6 or higher. It may run with a lower version, but I just tested it with Python 3.6.6.
+
+Use
 ```
    pip install raspend
 ```
+to install the package.
+
+## License
+
+MIT

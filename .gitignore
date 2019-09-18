@@ -3,3 +3,6 @@
 ################################################################################
 
 /raspend_example.log
+/raspend/build/lib/utils
+/raspend/dist
+/raspend/raspend.egg-info
