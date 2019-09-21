@@ -23,7 +23,7 @@
   <ItemGroup>
     <Compile Include="example1.py" />
     <Compile Include="example2.py" />
-    <Compile Include="raspend\raspend_http.py" />
+    <Compile Include="raspend\http.py" />
     <Compile Include="setup.py">
       <SubType>Code</SubType>
     </Compile>

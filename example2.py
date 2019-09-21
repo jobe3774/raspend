@@ -13,7 +13,7 @@ import argparse
 import time
 import os
 
-from raspend.raspend_http import RaspendHTTPServerThread
+from raspend.http import RaspendHTTPServerThread
 import raspend.utils.serviceshutdownhandling as ServiceShutdownHandling
 import raspend.utils.dataacquisition as DataAcquisition
 

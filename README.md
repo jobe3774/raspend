@@ -10,14 +10,14 @@ Since I am doing a lot of home automation stuff on the Raspberry Pi and since th
 
 ## Now, what does this framework provide?
 
-As 'backend' already suggests it, this framework provides you with an easy way of creating a small HTTP web service on your RPi. The **RaspendHTTPServerThread** class is based on Python's **HTTPServer** class and it is executed in its own thread. Besides that, it provides you also with an easy way of acquiring data (e.g. temperatures measurements) in a multithreaded way.
+As 'backend' already suggests, this framework provides you with an easy way of creating a small HTTP web service on your RPi. The **RaspendHTTPServerThread** class is based on Python's **HTTPServer** class and it is executed in its own thread. Besides that, it also provides you with an easy way of acquiring data (e.g. temperatures measurements) in a multithreaded way.
 
 The one idea is that the data acquisition threads you write all use a shared dictionary to store their data. The HTTP server thread knows this dictionary too and exposes it as a JSON string via HTTP GET requests.
 
 By the way, you only need to write a handler deriving the **DataAcquisitionHandler** class and provide it to the respective instance of **DataAcquisitionThread**.
 
 ``` python
-from raspend.raspend_http import RaspendHTTPServerThread
+from raspend.http import RaspendHTTPServerThread
 import raspend.utils.dataacquisition as DataAcquisition
 
 class myDataAcquisitionHandler(DataAcquisition.DataAcquisitionHandler):
@@ -42,10 +42,10 @@ dataThread1.start()
 httpd.start()
 ```
 
-The other idea was it to expose different functionalities, such as switching a light bulb via GPIO, as a command you can send to your RPi via HTTP POST request. All you have to do is to encapsulate the functionality you want to make available to the outside world into a method of a Python class. Then instantiate your class and create a new **Command** object to which you pass your method. In another step, add this **Command** object to the so-called **CommandMap**. You then pass this **CommandMap** in the constructor to the instance of your **RaspendHTTPServerThread**. Now you can execute your method using a simple HTTP POST request. 
+The other idea was to expose different functionalities, such as switching on/off a light bulb via GPIO, as a command you can send to your RPi via HTTP POST request. All you have to do is to encapsulate the functionality you want to make available to the outside world into a method of a Python class. Then instantiate your class and create a new **Command** object to which you pass your method. In another step add this **Command** object to the so called **CommandMap**. You then pass this **CommandMap** in the constructor to the instance of your **RaspendHTTPServerThread**. Now you can execute your method using a simple HTTP POST request. 
 
 ``` python
-from raspend.raspend_http import RaspendHTTPServerThread
+from raspend.http import RaspendHTTPServerThread
 import raspend.utils.commandmapping as CommandMapping
 
 class DoorBell():
@@ -86,7 +86,7 @@ Please have a look at the examples included in this project to get a better unde
 
 As mentioned above, the data acquisition side of your web service writes its data to a shared dictionary you provide it with. You can query this data by sending a HTTP GET request to **http://<your-raspberrypi's-ip:port>/data**. Your **RaspendHTTPServerThread** then sends the whole shared dictionary as a JSON string. 
 
-Let's say you are measuring the temperatures of different rooms of your house's floors, then the shared dictionary could have the following structure:
+Let's say you are measuring the temperatures of different rooms of your house, then the shared dictionary could have the following structure:
 
 ```
 {
