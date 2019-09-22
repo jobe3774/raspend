@@ -199,14 +199,18 @@ Since remain untouched, you can attach any other information with that command s
 
 ## How to install?
 
-Make sure you have installed Python 3.6 or higher. It may run with a lower version, but I just tested it with Python 3.6.6.
+Make sure you have installed Python 3.5 or higher. I've tested the package on my Raspberry Pi 3 Model B+ running **Raspbian GNU/Linux 9 (stretch)** with Python 3.5.3 installed. 
 
 Use
 ```
-   pip install raspend
+$ pip install raspend
+```
+or if Python 3 isn't the default use
+```
+$ pip3 install raspend
 ```
 to install the package.
 
 ## License
 
-MIT
+MIT. See LICENSE file.
