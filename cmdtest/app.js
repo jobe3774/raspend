@@ -1,4 +1,5 @@
-var g_baseUrl = "http://localhost:8080";
+var g_baseUrl = "http://raspberrypi:8090";
+//var g_baseUrl = "http://localhost:8090";
 
 function onInit()
 {

@@ -40,7 +40,7 @@ def main():
     startTime = time.asctime()
     pid = os.getpid()
 
-    logging.info(f"Starting at {startTime} (PID={pid})")
+    logging.info("Starting at {} (PID={})".format(startTime, pid))
 
     # Check commandline arguments.
     cmdLineParser = argparse.ArgumentParser(prog="raspend_example", usage="%(prog)s [options]")

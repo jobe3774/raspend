@@ -43,7 +43,6 @@ class DataAcquisitionThread(threading.Thread):
         """
         threading.Thread.__init__(self)
 
-        self.debug = True
         self.threadSleep = threadSleep
         self.shutdownFlag = shutdownFlag
         self.dataLock = dataLock
@@ -59,8 +58,4 @@ class DataAcquisitionThread(threading.Thread):
             self.dataAcquisitionHandler.acquireData()
             # release lock
             self.dataLock.release()
-
-            if self.debug:
-                print (self)
-
-            time.sleep(self.threadSleep)
+            self.shutdownFlag.wait(self.threadSleep)

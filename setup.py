@@ -12,7 +12,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="raspend",
-    version="1.0.0",
+    version="1.0.1",
     author="Joerg Beckers",
     author_email="pypi@jobe-software.de",
     description="A small and easy to use HTTP backend framework for the Raspberry Pi which is ideal for small to medium-sized home automation projects.",
@@ -27,5 +27,5 @@ setuptools.setup(
         "Operating System :: OS Independent",
         "Topic :: Home Automation",
     ],
-    python_requires='>=3.6',
+    python_requires='>=3.5',
 )
