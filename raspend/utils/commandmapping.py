@@ -79,10 +79,10 @@ class CallbackFunction():
         Check args and invoke callback method.
         """
         if not type(args) is dict:
-            return False
+            raise TypeError("Arguments need to be passed in a dictionary!")
         for key in args.keys():
             if not self.hasParameter(key):
-                return False
+                raise KeyError("No argument '{0}' found!".format(key))
         return self.__function(**args)
 
 class Command():

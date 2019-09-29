@@ -197,6 +197,20 @@ and invokes the method. The response of this HTTP POST request will be your JSON
 ``` 
 Since remain untouched, you can attach any other information with that command such as an element-id of your frontend invoking it.
 
+Starting with version 1.1.0, you can also use HTTP GET requests to invoke commands. The request has to following structure:
+
+```
+ /cmd?name=command&arg1=val1&arg2=val2...&argN=valN
+```
+
+So for the above mentioned example **theDoorBell.switchDoorBell**, the correct request would be:
+
+```
+ /cmd?name=theDoorBell.switchDoorBell&onoff=off
+```
+
+The **RaspendHTTPServerThread** invokes the command and responds with the result of the invocation as a JSON string.
+
 ## How to install?
 
 Make sure you have installed Python 3.5 or higher. I've tested the package on my Raspberry Pi 3 Model B+ running **Raspbian GNU/Linux 9 (stretch)** with Python 3.5.3 installed. 
