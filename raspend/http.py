@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 #  The HTTP request handling interface for raspend.
-#  'raspend' stands for RaspberryPi EndPoint.
+#  'raspend' stands for RaspberryPi Backend.
 #  
 #  License: MIT
 #  
@@ -11,6 +11,7 @@
 from functools import partial
 from http.server import BaseHTTPRequestHandler
 import json
+import urllib
 
 from .utils import stoppablehttpserver
 
@@ -181,6 +182,49 @@ class RaspendHttpRequestHandler(BaseHTTPRequestHandler):
         self.dataLock.release()
         return strJsonResponse
 
+    def onGetCmd(self, queryParams):
+        """ Call a command via HTTP GET. The response will be the command's return value as a JSON string.
+        """
+        strJsonResponse = ""
+
+        cmdName = queryParams["name"][0]
+        cmdArgs = dict()
+
+        cmd = self.commandMap.get(cmdName)
+
+        if cmd == None:
+            self.send_error(404, ("Command '{0}' not found!".format(cmdName)))
+            return
+
+        del (queryParams["name"])
+
+        for k,v in queryParams.items():
+            cmdArgs[k] = v[0]
+
+        result = ""
+
+        try:
+            result = cmd.execute(cmdArgs)
+        except Exception as e:
+            self.send_error(500, "An unexpected error occured during execution of '{0}'! Exception: {1}".format(cmdName, e))
+            return
+
+        strJsonResponse = json.dumps(result, ensure_ascii=False)
+            
+        try:
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json; charset=utf-8')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(bytes(strJsonResponse, 'utf-8'))
+        except OSError:
+            self.send_error(500)
+        except BlockingIOError:
+            self.send_error(500)
+        except Exception as e:
+            self.send_error(500, "An unexpected error occured during execution of '{0}'! Exception: {1}".format(cmdName, e))
+        return
+
     def do_GET(self):
         """ Handle HTTP GET request
 
@@ -188,21 +232,31 @@ class RaspendHttpRequestHandler(BaseHTTPRequestHandler):
             '/data/key' : returns sub-element of 'dataDict' as JSON string
             '/cmds'     : returns the list of available commands
         """
+        urlComponents = urllib.parse.urlparse(self.path)
+        queryParams = urllib.parse.parse_qs(urlComponents.query)
+
         strJsonResponse = ""
-        
-        if self.path.lower() == "/cmds":
+
+        if urlComponents.path.lower() == "/cmds":
             if self.commandMap == None or len(self.commandMap) == 0:
-                self.send_error(501, "No commands available.")
+                self.send_error(501, "No commands available")
+                return
             else:
                 strJsonResponse = self.onGetCmds()
-        elif self.path == "/data" and self.dataDict != None:
+        elif urlComponents.path.lower() == "/cmd":
+            if self.commandMap == None or len(self.commandMap) == 0:
+                self.send_error(501, "No commands available")
+                return
+            else:
+                return self.onGetCmd(queryParams)
+        elif urlComponents.path.lower() == "/data" and self.dataDict != None:
             strJsonResponse = self.onGetRootDataPath()
-        elif self.path.startswith("/data/")  and self.dataDict != None:
+        elif urlComponents.path.startswith("/data/")  and self.dataDict != None:
             strJsonResponse = self.onGetDetailedDataPath()
         else:
             self.send_error(404)
             return
-
+        
         try:
             self.send_response(200)
             self.send_header('Content-type', 'application/json; charset=utf-8')
