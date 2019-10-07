@@ -18,10 +18,6 @@ import raspend.utils.serviceshutdownhandling as ServiceShutdownHandling
 import raspend.utils.dataacquisition as DataAcquisition
 
 class myDataAcquisitionHandler(DataAcquisition.DataAcquisitionHandler):
-    def __init__(self, name, dataDict = None):
-        self.name = name
-        return super().__init__(dataDict)
-
     def acquireData(self):
         if not self.name in self.dataDict:
             self.dataDict[self.name] = {"loop" : 1}
@@ -61,8 +57,8 @@ def main():
         # This handler is called by the data acquisition thread. 
         # Here you fill 'dataDict' with the data you want to expose via HTTP as a JSON string.
         # Make sure your data is serializable, otherwise the request handler will fail.
-        dataGetter1 = myDataAcquisitionHandler("dataGetter1", dataDict)
-        dataGetter2 = myDataAcquisitionHandler("dataGetter2", dataDict)
+        dataGetter1 = myDataAcquisitionHandler(dataDict)
+        dataGetter2 = myDataAcquisitionHandler(dataDict)
     
         # Start threads for acquiring some data.
         dataThread1 = DataAcquisition.DataAcquisitionThread(3, shutdownFlag, dataLock, dataGetter1)
