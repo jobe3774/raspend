@@ -18,6 +18,10 @@ import raspend.utils.serviceshutdownhandling as ServiceShutdownHandling
 import raspend.utils.dataacquisition as DataAcquisition
 
 class myDataAcquisitionHandler(DataAcquisition.DataAcquisitionHandler):
+    def __init__(self, name, dataDict = None):
+        self.name = name
+        return super().__init__(dataDict)
+
     def acquireData(self):
         if not self.name in self.dataDict:
             self.dataDict[self.name] = {"loop" : 1}

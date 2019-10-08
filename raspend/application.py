@@ -8,6 +8,7 @@
 #  Copyright (c) 2019 Joerg Beckers
 
 import threading
+import time
 
 from .http import RaspendHTTPServerThread
 from .utils import serviceshutdownhandling as ServiceShutdownHandling
@@ -15,7 +16,10 @@ from .utils import dataacquisition as DataAcquisition
 from .utils import commandmapping as CommandMapping
 
 class RaspendApplication():
-    def __init__(self, *args, **kwargs):
+    def __init__(self, port, *args, **kwargs):
+        # The server port
+        self.port = port
+
         # A list holding instances of DataAcquisitionThread 
         self.daqThreads = list()
 
@@ -37,11 +41,17 @@ class RaspendApplication():
         if self.running:
             raise Exception("Cannot add threads while running. Please create your threads prior to calling the run() method!")
 
+        if not isinstance(dataAcquisitionHandler, DataAcquisition.DataAcquisitionHandler):
+            raise TypeError("Your 'dataAcquisitionHandler' must be of type 'DataAcquisition.DataAcquisitionHandler'!")
+        
+        dataAcquisitionHandler.setDataDict(self.dataDict)
+
         dataThread = DataAcquisition.DataAcquisitionThread(threadSleep, 
                                                            self.shutdownFlag, 
                                                            self.dataLock, 
-                                                           dataAcquisitionHandler(self.dataDict))
+                                                           dataAcquisitionHandler)
         self.daqThreads.append(dataThread)
+
         return len(self.daqThreads)
 
     def addCommand(self, callbackMethod):
@@ -49,6 +59,39 @@ class RaspendApplication():
             raise Exception("Cannot add commands while running. Please your commands prior to calling the run() method!")
 
         self.cmdMap.add(CommandMapping.Command(callbackMethod))
+
         return len(self.cmdMap)
 
     def run(self):
+        try:
+            # Initialize signal handler to be able to have a graceful shutdown.
+            ServiceShutdownHandling.initServiceShutdownHandling()
+
+            # The HTTP server thread - our HTTP interface
+            httpd = RaspendHTTPServerThread(self.shutdownFlag, self.dataLock, self.dataDict, self.cmdMap, self.port)
+
+            # Start our threads.
+            for daqThread in self.daqThreads:
+                daqThread.start()
+
+            httpd.start()
+
+            # Keep primary thread alive.
+            while True:
+                time.sleep(0.5)
+
+        except ServiceShutdownHandling.ServiceShutdownException:
+            # Signal the shutdown flag, so the threads can quit their work.
+            self.shutdownFlag.set()
+            # Wait for all thread to end.
+            for daqThread in self.daqThreads:
+                daqThread.join()
+            httpd.join()
+
+        except Exception as e:
+            print ("An unexpected error occured. Error: {}".format(e))
+
+        finally:
+            pass
+
+        return
