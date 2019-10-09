@@ -46,7 +46,6 @@ class ReadOneWireTemperature(DataAcquisition.DataAcquisitionHandler):
             self.dataDict[self.groupId] = {self.sensorId : temp}
         else:
             self.dataDict[self.groupId][self.sensorId] = temp
-
         return
 
 myApp = RaspendApplication(8080)

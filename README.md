@@ -10,43 +10,54 @@ Since I am doing a lot of home automation stuff on the Raspberry Pi and since th
 
 ## Now, what does this framework provide?
 
-As 'backend' already suggests, this framework provides you with an easy way of creating a small HTTP web service on your RPi. The **RaspendHTTPServerThread** class is based on Python's **HTTPServer** class and it is executed in its own thread. Besides that, it also provides you with an easy way of acquiring data (e.g. temperatures measurements) in a multithreaded way.
+As 'backend' already suggests, this framework provides you with an easy way of creating a small HTTP web service on your RPi. The **RaspendApplication** class runs the **RaspendHTTPServerThread**, which is based on Python's **HTTPServer** class, to handle incoming HTTP requests. Besides that, this framework provides you with an easy way of acquiring data (e.g. temperatures measurements) in a multithreaded way.
 
-The one idea is that the data acquisition threads you write all use a shared dictionary to store their data. The HTTP server thread knows this dictionary too and exposes it as a JSON string via HTTP GET requests.
+The one idea is, that the data acquisition threads you create all use one shared dictionary to store their data. The HTTP server thread knows this dictionary too and exposes it as a JSON string via HTTP GET requests.
 
-By the way, you only need to write a handler deriving the **DataAcquisitionHandler** class and provide it to the respective instance of **DataAcquisitionThread**.
+You only need to write a handler deriving the **DataAcquisitionHandler** class and call the **createDataAcquisitionThread** method of **RaspendApplication** to create a new instance of a **DataAcquisitionThread**. The **RaspendApplication** class manages the list of your threads.
+
 
 ``` python
-from raspend.http import RaspendHTTPServerThread
-import raspend.utils.dataacquisition as DataAcquisition
+from raspend.application import RaspendApplication
+from raspend.utils import dataacquisition as DataAcquisition
 
-class myDataAcquisitionHandler(DataAcquisition.DataAcquisitionHandler):
-    def __init__(self, name, dataDict = None):
-        self.name = name
-        return super().__init__(dataDict)
+class ReadOneWireTemperature(DataAcquisition.DataAcquisitionHandler):
+    def __init__(self, groupId, sensorId, oneWireSensorPath = ""):
+        # A groupId for grouping the temperature sensors
+        self.groupId = groupId
+        # The name or Id of your sensor under which you would read it's JSON value
+        self.sensorId = sensorId
+        # The path of your sensor within your system
+        self.oneWireSensorPath = oneWireSensorPath
 
     def acquireData(self):
-        if not self.name in self.dataDict:
-            self.dataDict[self.name] = {"loop" : 1}
+        # If you use 1-Wire sensors like a DS18B20 you normally would read its w1_slave file like:
+        # /sys/bus/w1/devices/<the-sensor's system id>/w1_slave
+        temp = random.randint(18, 24)
+
+        if not self.groupId in self.dataDict:
+            self.dataDict[self.groupId] = {self.sensorId : temp}
         else:
-            self.dataDict[self.name]["loop"] += 1
+            self.dataDict[self.groupId][self.sensorId] = temp
+        return
 
-...
 
-dataGetter1 = myDataAcquisitionHandler("dataGetter1", dataDict)
-dataThread1 = DataAcquisition.DataAcquisitionThread(3, shutdownFlag, dataLock, dataGetter1)
+myApp = RaspendApplication(8080)
 
-httpd = RaspendHTTPServerThread(shutdownFlag, dataLock, dataDict, None, args.port)
+myApp.createDataAcquisitionThread(ReadOneWireTemperature("basement", "party_room", "/sys/bus/w1/devices/23-000000000001/w1_slave"), 30)
+myApp.createDataAcquisitionThread(ReadOneWireTemperature("basement", "heating_room", "/sys/bus/w1/devices/23-000000000002/w1_slave"), 30)
+myApp.createDataAcquisitionThread(ReadOneWireTemperature("basement", "fitness_room", "/sys/bus/w1/devices/23-000000000003/w1_slave"), 30)
+myApp.createDataAcquisitionThread(ReadOneWireTemperature("ground_floor", "kitchen", "/sys/bus/w1/devices/23-000000000004/w1_slave"), 30)
+myApp.createDataAcquisitionThread(ReadOneWireTemperature("ground_floor", "living_room", "/sys/bus/w1/devices/23-000000000005/w1_slave"), 30)
 
-dataThread1.start()
-httpd.start()
+myApp.run()
+
 ```
 
-The other idea was to expose different functionalities, such as switching on/off a light bulb via GPIO, as a command you can send to your RPi via HTTP POST request. All you have to do is to encapsulate the functionality you want to make available to the outside world into a method of a Python class. Then instantiate your class and create a new **Command** object to which you pass your method. In another step add this **Command** object to the so called **CommandMap**. You then pass this **CommandMap** in the constructor to the instance of your **RaspendHTTPServerThread**. Now you can execute your method using a simple HTTP POST request. 
+The other idea is to expose different functionalities, such as switching on/off your door bell via GPIO, as a command you can send to your RPi via HTTP POST request. All you have to do is to encapsulate the functionality you want to make available to the outside world into a method of a Python class. Then instantiate your class and call the **addCommand** method of **RaspendApplication** providing the method you want to expose. Now you can execute your method using a simple HTTP POST request. 
 
 ``` python
-from raspend.http import RaspendHTTPServerThread
-import raspend.utils.commandmapping as CommandMapping
+from raspend.application import RaspendApplication
 
 class DoorBell():
     def __init__(self, *args, **kwargs):
@@ -64,27 +75,26 @@ class DoorBell():
     def getCurrentState(self):
         return self.doorBellState
 
-...
+myApp = RaspendApplication(8080)
 
 theDoorBell = DoorBell()
 
-cmdMap = CommandMapping.CommandMap()
+myApp.addCommand(theDoorBell.switchDoorBell)
+myApp.addCommand(theDoorBell.getCurrentState)
 
-cmdMap.add(CommandMapping.Command(theDoorBell.switchDoorBell))
-cmdMap.add(CommandMapping.Command(theDoorBell.getCurrentState))
+myApp.run()
 
-httpd = RaspendHTTPServerThread(shutdownFlag, dataLock, dataDict, cmdMap, args.port)
-
-httpd.start()
 ``` 
 
-Please have a look at the examples included in this project to get a better understanding.
+When all initialization stuff is done (adding commands, creating data acquisition threads), then you start your application by calling the **run** method of **RaspendApplication**. The **RaspendApplication** class installs signal handlers for SIGTERM and SIGINT, so you can quit your application by pressing CTRL+C or sending one of the signals via the **kill** command of your shell.
+
+Please have a look at the examples included in this project to get a better understanding. *example1.py* and *example2.py* show how to do most of the work yourself, while *example3.py* shows you the most convenient way of using this framework.
 
 ## How to use the HTTP interface?
 
 ### The data part
 
-As mentioned above, the data acquisition side of your web service writes its data to a shared dictionary you provide it with. You can query this data by sending a HTTP GET request to **http://<your-raspberrypi's-ip:port>/data**. Your **RaspendHTTPServerThread** then sends the whole shared dictionary as a JSON string. 
+As mentioned above, the data acquisition side of your web service writes its data to a shared dictionary. You can query this data by sending a HTTP GET request to **http://<your-raspberrypi's-ip:port>/data**. The **RaspendHTTPServerThread** then sends the whole shared dictionary as a JSON string. 
 
 Let's say you are measuring the temperatures of different rooms of your house, then the shared dictionary could have the following structure:
 
