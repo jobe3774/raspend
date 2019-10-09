@@ -18,6 +18,11 @@ class DataAcquisitionHandler():
     def __init__(self, dataDict=None):
         """ The contructor gets a dictionary which will be used to store any acquired data.
         """
+        self.setDataDict(dataDict)
+
+    def setDataDict(self, dataDict):
+        """ Set the shared dictionary
+        """
         self.dataDict = dataDict
 
     def acquireData(self):

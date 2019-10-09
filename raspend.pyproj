@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{d0fd4413-717c-4da2-b189-4cc8bdecbc68}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>example1.py</StartupFile>
+    <StartupFile>Examples\example3.py</StartupFile>
     <SearchPath />
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
@@ -21,8 +21,14 @@
     <VisualStudioVersion Condition=" '$(VisualStudioVersion)' == '' ">10.0</VisualStudioVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="example1.py" />
-    <Compile Include="example2.py" />
+    <Compile Include="Examples\example1.py" />
+    <Compile Include="Examples\example2.py" />
+    <Compile Include="Examples\example3.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="raspend\application.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="raspend\http.py" />
     <Compile Include="setup.py">
       <SubType>Code</SubType>
@@ -35,6 +41,7 @@
     <Compile Include="raspend\__init__.py" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Examples\" />
     <Folder Include="raspend" />
     <Folder Include="raspend\utils" />
   </ItemGroup>

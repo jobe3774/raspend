@@ -5,5 +5,4 @@
 #  
 #  Copyright (c) 2019 Joerg Beckers
 
-name = "http"
-__all__ = ["http"]
+__all__ = ["http", "application"]
