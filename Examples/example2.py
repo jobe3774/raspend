@@ -18,15 +18,15 @@ import raspend.utils.serviceshutdownhandling as ServiceShutdownHandling
 import raspend.utils.dataacquisition as DataAcquisition
 
 class myDataAcquisitionHandler(DataAcquisition.DataAcquisitionHandler):
-    def __init__(self, name, dataDict = None):
+    def __init__(self, name, sharedDict = None):
         self.name = name
-        return super().__init__(dataDict)
+        return super().__init__(sharedDict)
 
     def acquireData(self):
-        if not self.name in self.dataDict:
-            self.dataDict[self.name] = {"loop" : 1}
+        if not self.name in self.sharedDict:
+            self.sharedDict[self.name] = {"loop" : 1}
         else:
-            self.dataDict[self.name]["loop"] += 1
+            self.sharedDict[self.name]["loop"] += 1
 
 def main():
     logging.basicConfig(filename='raspend_example.log', level=logging.INFO)
@@ -50,7 +50,7 @@ def main():
         ServiceShutdownHandling.initServiceShutdownHandling()
 
         # Object for holding the data.
-        dataDict = dict()
+        sharedDict = dict()
 
         # Event used for proper shutting down our threads.
         shutdownFlag = threading.Event()
@@ -59,17 +59,17 @@ def main():
         dataLock = threading.Lock()
 
         # This handler is called by the data acquisition thread. 
-        # Here you fill 'dataDict' with the data you want to expose via HTTP as a JSON string.
+        # Here you fill 'sharedDict' with the data you want to expose via HTTP as a JSON string.
         # Make sure your data is serializable, otherwise the request handler will fail.
-        dataGetter1 = myDataAcquisitionHandler("dataGetter1", dataDict)
-        dataGetter2 = myDataAcquisitionHandler("dataGetter2", dataDict)
+        dataGetter1 = myDataAcquisitionHandler("dataGetter1", sharedDict)
+        dataGetter2 = myDataAcquisitionHandler("dataGetter2", sharedDict)
     
         # Start threads for acquiring some data.
         dataThread1 = DataAcquisition.DataAcquisitionThread(3, shutdownFlag, dataLock, dataGetter1)
         dataThread2 = DataAcquisition.DataAcquisitionThread(5, shutdownFlag, dataLock, dataGetter2)
 
         # The HTTP server thread - our HTTP interface
-        httpd = RaspendHTTPServerThread(shutdownFlag, dataLock, dataDict, None, args.port)
+        httpd = RaspendHTTPServerThread(shutdownFlag, dataLock, sharedDict, None, args.port)
 
         # Start our threads.
         dataThread1.start()

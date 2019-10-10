@@ -42,10 +42,10 @@ class ReadOneWireTemperature(DataAcquisition.DataAcquisitionHandler):
         # /sys/bus/w1/devices/<the-sensor's system id>/w1_slave
         temp = random.randint(18, 24)
 
-        if not self.groupId in self.dataDict:
-            self.dataDict[self.groupId] = {self.sensorId : temp}
+        if not self.groupId in self.sharedDict:
+            self.sharedDict[self.groupId] = {self.sensorId : temp}
         else:
-            self.dataDict[self.groupId][self.sensorId] = temp
+            self.sharedDict[self.groupId][self.sensorId] = temp
         return
 
 myApp = RaspendApplication(8080)

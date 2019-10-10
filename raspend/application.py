@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #  
-#  Main loop of an Raspend application
+#  Main loop of an Raspend application.
 #
 #  License: MIT
 #  
@@ -30,7 +30,7 @@ class RaspendApplication():
         self.__cmdMap = CommandMapping.CommandMap()
 
         # A shared dictionary for the data acquisition threads and the HTTP server thread.
-        self.__dataDict = dict()
+        self.__sharedDict = dict()
         
         # Event used for proper shutting down our threads.
         self.__shutdownFlag = threading.Event()
@@ -45,7 +45,7 @@ class RaspendApplication():
         if not isinstance(dataAcquisitionHandler, DataAcquisition.DataAcquisitionHandler):
             raise TypeError("Your 'DataAcquisitionHandler' must be derived from 'DataAcquisition.DataAcquisitionHandler'!")
         
-        dataAcquisitionHandler.setDataDict(self.__dataDict)
+        dataAcquisitionHandler.setSharedDict(self.__sharedDict)
 
         dataThread = DataAcquisition.DataAcquisitionThread(threadSleep, 
                                                            self.__shutdownFlag, 
@@ -70,7 +70,7 @@ class RaspendApplication():
             ServiceShutdownHandling.initServiceShutdownHandling()
 
             # The HTTP server thread - our HTTP interface
-            httpd = RaspendHTTPServerThread(self.__shutdownFlag, self.__dataLock, self.__dataDict, self.__cmdMap, self.__port)
+            httpd = RaspendHTTPServerThread(self.__shutdownFlag, self.__dataLock, self.__sharedDict, self.__cmdMap, self.__port)
 
             # Start our threads.
             httpd.start()

@@ -19,9 +19,9 @@ from .utils import stoppablehttpserver
 class RaspendHttpRequestHandler(BaseHTTPRequestHandler):
     """ This class handles all incoming request to the raspend server
     """
-    def __init__(self, dataLock, dataDict, commandMap, *args, **kwargs):
+    def __init__(self, dataLock, sharedDict, commandMap, *args, **kwargs):
         self.dataLock = dataLock
-        self.dataDict = dataDict
+        self.sharedDict = sharedDict
         self.commandMap = commandMap
         return super().__init__(*args, **kwargs)
 
@@ -146,19 +146,19 @@ class RaspendHttpRequestHandler(BaseHTTPRequestHandler):
         return
 
     def onGetRootDataPath(self):
-        """ Called when / is requested and dumps the given 'dataDict' completly.
+        """ Called when / is requested and dumps the given 'sharedDict' completly.
         """
         self.dataLock.acquire()
-        strJsonResponse = json.dumps(self.dataDict, ensure_ascii=False)
+        strJsonResponse = json.dumps(self.sharedDict, ensure_ascii=False)
         self.dataLock.release()
         return strJsonResponse
                 
     def onGetDetailedDataPath(self):
-        """ Called when a more detailed path is requested. This allows you to request sub-elements of 'dataDict'.
+        """ Called when a more detailed path is requested. This allows you to request sub-elements of 'sharedDict'.
         """
         pathParts = self.path.split('/')
         self.dataLock.acquire()
-        data = self.dataDict
+        data = self.sharedDict
         for part in pathParts[1:]:
             if type(data) is dict and part in data.keys():
                 data = data[part]
@@ -228,8 +228,8 @@ class RaspendHttpRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         """ Handle HTTP GET request
 
-            '/data'     : returns the whole 'dataDict' as JSON string
-            '/data/key' : returns sub-element of 'dataDict' as JSON string
+            '/data'     : returns the whole 'sharedDict' as JSON string
+            '/data/key' : returns sub-element of 'sharedDict' as JSON string
             '/cmds'     : returns the list of available commands
         """
         urlComponents = urllib.parse.urlparse(self.path)
@@ -249,9 +249,9 @@ class RaspendHttpRequestHandler(BaseHTTPRequestHandler):
                 return
             else:
                 return self.onGetCmd(queryParams)
-        elif urlComponents.path.lower() == "/data" and self.dataDict != None:
+        elif urlComponents.path.lower() == "/data" and self.sharedDict != None:
             strJsonResponse = self.onGetRootDataPath()
-        elif urlComponents.path.startswith("/data/")  and self.dataDict != None:
+        elif urlComponents.path.startswith("/data/")  and self.sharedDict != None:
             strJsonResponse = self.onGetDetailedDataPath()
         else:
             self.send_error(404)
@@ -271,6 +271,6 @@ class RaspendHttpRequestHandler(BaseHTTPRequestHandler):
 class RaspendHTTPServerThread(stoppablehttpserver.StoppableHttpServerThread):
     """ The raspend server thread using 'RaspendHttpRequestHandler' for request handling
     """
-    def __init__(self, shutdownFlag=None, dataLock=None, dataDict=None, commandMap=None, serverPort=0):
-        handler = partial(RaspendHttpRequestHandler, dataLock, dataDict, commandMap)
+    def __init__(self, shutdownFlag=None, dataLock=None, sharedDict=None, commandMap=None, serverPort=0):
+        handler = partial(RaspendHttpRequestHandler, dataLock, sharedDict, commandMap)
         return super().__init__(shutdownFlag=shutdownFlag, handler=handler, serverPort=serverPort)

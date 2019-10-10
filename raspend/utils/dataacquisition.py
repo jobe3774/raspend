@@ -11,22 +11,22 @@ import threading
 import time
 
 class DataAcquisitionHandler():
-    """ Base class for a handler which acquires new data and stored it in the supplied dictionary 'dataDict'.
-        Derive this class and override the 'acquireData' - methods to fill the 'dataDict'.
+    """ Base class for a handler which acquires new data and stored it in the supplied dictionary 'sharedDict'.
+        Derive this class and override the 'acquireData' - methods to fill the 'sharedDict'.
     """
     
-    def __init__(self, dataDict=None):
+    def __init__(self, sharedDict=None):
         """ The contructor gets a dictionary which will be used to store any acquired data.
         """
-        self.setDataDict(dataDict)
+        self.setSharedDict(sharedDict)
 
-    def setDataDict(self, dataDict):
+    def setSharedDict(self, sharedDict):
         """ Set the shared dictionary
         """
-        self.dataDict = dataDict
+        self.sharedDict = sharedDict
 
     def acquireData(self):
-        """ This method is called by a 'DataAcquisitionThread'. Override this method to retrieve data and save the data in 'dataDict'.
+        """ This method is called by a 'DataAcquisitionThread'. Override this method to retrieve data and save the data in 'sharedDict'.
         """
         pass
 

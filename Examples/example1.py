@@ -56,7 +56,7 @@ def main():
         ServiceShutdownHandling.initServiceShutdownHandling()
 
         # Object for holding the data.
-        dataDict = dict()
+        sharedDict = dict()
 
         # Event used for proper shutting down our threads.
         shutdownFlag = threading.Event()
@@ -76,7 +76,7 @@ def main():
         cmdMap.add(CommandMapping.Command(theDoorBell.getCurrentState))
 
         # The HTTP server thread - our HTTP interface
-        httpd = RaspendHTTPServerThread(shutdownFlag, dataLock, dataDict, cmdMap, args.port)
+        httpd = RaspendHTTPServerThread(shutdownFlag, dataLock, sharedDict, cmdMap, args.port)
 
         # Start thread.
         httpd.start()
