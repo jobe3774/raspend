@@ -25,6 +25,12 @@ class DataAcquisitionHandler():
         """
         self.sharedDict = sharedDict
 
+    def prepare(self):
+        """ This method is called before the data acquisition thread is started with this handler.
+            So if you need to initialize parts of the shared dictionary you should override this method.
+        """
+        pass
+
     def acquireData(self):
         """ This method is called by a 'DataAcquisitionThread'. Override this method to retrieve data and save the data in 'sharedDict'.
         """
@@ -56,6 +62,11 @@ class DataAcquisitionThread(threading.Thread):
     def run(self):
         """ The thread loop runs until 'shutdownFlag' has been signaled. Sleep for 'threadSleep' milliseconds.
         """
+        # Let the handler prepare it's section within the shared dictionary.
+        self.dataLock.acquire()
+        self.dataAcquisitionHandler.prepare()
+        self.dataLock.release()
+
         while not self.shutdownFlag.is_set():
             # acquire lock
             self.dataLock.acquire()
