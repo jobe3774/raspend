@@ -38,15 +38,17 @@ class ReadOneWireTemperature(DataAcquisition.DataAcquisitionHandler):
         # The path of your sensor within your system
         self.oneWireSensorPath = oneWireSensorPath
 
+    def prepare(self):
+        if self.groupId not in self.sharedDict:
+            self.sharedDict[self.groupId] = {}
+        self.sharedDict[self.groupId][self.sensorId] = 0
+        return
+
     def acquireData(self):
         # If you use 1-Wire sensors like a DS18B20 you normally would read its w1_slave file like:
         # /sys/bus/w1/devices/<the-sensor's system id>/w1_slave
         temp = random.randint(18, 24)
-
-        if not self.groupId in self.sharedDict:
-            self.sharedDict[self.groupId] = {self.sensorId : temp}
-        else:
-            self.sharedDict[self.groupId][self.sensorId] = temp
+        self.sharedDict[self.groupId][self.sensorId] = temp
         return
 
 myApp = RaspendApplication(8080)
