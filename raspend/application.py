@@ -19,7 +19,7 @@ class RaspendApplication():
     """ This class handles the main loop for a raspend based application.
     """
 
-    def __init__(self, port, *args, **kwargs):
+    def __init__(self, port, sharedDict=None):
         # The server port
         self.__port = port
 
@@ -30,7 +30,10 @@ class RaspendApplication():
         self.__cmdMap = CommandMapping.CommandMap()
 
         # A shared dictionary for the data acquisition threads and the HTTP server thread.
-        self.__sharedDict = dict()
+        if not sharedDict is None:
+            self.__sharedDict = sharedDict
+        else:
+            self.__sharedDict = dict()
         
         # Event used for proper shutting down our threads.
         self.__shutdownFlag = threading.Event()
