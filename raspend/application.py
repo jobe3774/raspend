@@ -65,6 +65,13 @@ class RaspendApplication():
 
         return len(self.__cmdMap)
 
+    def updateSharedDict(self, other):
+        """ Updates the shared dictionary with 'other'. 
+            Note: existing keys will be overwritten.
+        """
+        self.__sharedDict.update(other)
+        return len(self.__sharedDict)
+
     def run(self):
         """ Run the main loop of your application.
         """

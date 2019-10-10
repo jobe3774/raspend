@@ -7,6 +7,7 @@
 #  
 #  Copyright (c) 2019 Joerg Beckers
 
+import time
 import random
 
 from raspend.application import RaspendApplication
@@ -54,6 +55,8 @@ theDoorBell = DoorBell()
 
 myApp.addCommand(theDoorBell.switchDoorBell)
 myApp.addCommand(theDoorBell.getCurrentState)
+
+myApp.updateSharedDict({"Starting Time" : time.asctime()})
 
 myApp.createDataAcquisitionThread(ReadOneWireTemperature("basement", "party_room", "/sys/bus/w1/devices/23-000000000001/w1_slave"), 30)
 myApp.createDataAcquisitionThread(ReadOneWireTemperature("basement", "heating_room", "/sys/bus/w1/devices/23-000000000002/w1_slave"), 30)
