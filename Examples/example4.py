@@ -10,6 +10,10 @@
 import time
 import random
 import requests
+from requests.exceptions import HTTPError
+import argparse
+import getpass
+import json
 
 from raspend.application import RaspendApplication
 from raspend.utils import dataacquisition as DataAcquisition
@@ -61,26 +65,50 @@ class PublishOneWireTemperatures(Publishing.PublishDataHandler):
 
     def publishData(self):
         data = json.dumps(self.sharedDict)
-        rq = requests.post(self.endPoint, data, auth=(self.userName, self.password))
+        try:
+            response = requests.post(self.endPoint, data, auth=(self.userName, self.password))
+            response.raise_for_status()
+        except HTTPError as http_err:
+            print("HTTP error occurred: {}".format(http_err))
+        except Exception as err:
+            print("Unexpected error occurred: {}".format(err))
+        else:
+            #print("Succeeded")
+            print(response.text)
         
+def main():
 
-myApp = RaspendApplication(8080)
+    cmdLineParser = argparse.ArgumentParser(prog="example4", usage="%(prog)s [options]")
+    cmdLineParser.add_argument("--port", help="The port the server should listen on", type=int, required=True)
 
-theDoorBell = DoorBell()
+    try: 
+        args = cmdLineParser.parse_args()
+    except SystemExit:
+        return
 
-myApp.addCommand(theDoorBell.switchDoorBell)
-myApp.addCommand(theDoorBell.getCurrentState)
+    username = input("Enter username: ")
+    password = getpass.getpass("Enter password: ")
 
-myApp.updateSharedDict({"Starting Time" : time.asctime()})
+    myApp = RaspendApplication(args.port)
 
-myApp.createDataAcquisitionThread(ReadOneWireTemperature("basement", "party_room", "/sys/bus/w1/devices/23-000000000001/w1_slave"), 3)
-myApp.createDataAcquisitionThread(ReadOneWireTemperature("basement", "heating_room", "/sys/bus/w1/devices/23-000000000002/w1_slave"), 3)
-myApp.createDataAcquisitionThread(ReadOneWireTemperature("basement", "fitness_room", "/sys/bus/w1/devices/23-000000000003/w1_slave"), 3)
-myApp.createDataAcquisitionThread(ReadOneWireTemperature("ground_floor", "kitchen", "/sys/bus/w1/devices/23-000000000004/w1_slave"), 3)
-myApp.createDataAcquisitionThread(ReadOneWireTemperature("ground_floor", "living_room", "/sys/bus/w1/devices/23-000000000005/w1_slave"), 3)
+    theDoorBell = DoorBell()
 
-myApp.createPublishDataThread(PublishOneWireTemperatures("", "", ""), 15)
+    myApp.addCommand(theDoorBell.switchDoorBell)
+    myApp.addCommand(theDoorBell.getCurrentState)
 
-myApp.run()
+    myApp.updateSharedDict({"Starting Time" : time.asctime()})
 
-print ("Exit")
+    myApp.createDataAcquisitionThread(ReadOneWireTemperature("basement", "party_room", "/sys/bus/w1/devices/23-000000000001/w1_slave"), 3)
+    myApp.createDataAcquisitionThread(ReadOneWireTemperature("basement", "heating_room", "/sys/bus/w1/devices/23-000000000002/w1_slave"), 3)
+    myApp.createDataAcquisitionThread(ReadOneWireTemperature("basement", "fitness_room", "/sys/bus/w1/devices/23-000000000003/w1_slave"), 3)
+    myApp.createDataAcquisitionThread(ReadOneWireTemperature("ground_floor", "kitchen", "/sys/bus/w1/devices/23-000000000004/w1_slave"), 3)
+    myApp.createDataAcquisitionThread(ReadOneWireTemperature("ground_floor", "living_room", "/sys/bus/w1/devices/23-000000000005/w1_slave"), 3)
+
+    myApp.createPublishDataThread(PublishOneWireTemperatures("http://localhost/raspend/api/post_data.php", username, password), 5)
+
+    myApp.run()
+
+    print ("Exit")
+
+if __name__ == "__main__":
+    main()
