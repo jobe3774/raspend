@@ -55,6 +55,39 @@ myApp.run()
 
 ```
 
+Though your acquired data is available via raspend's HTTP interface, you probably want to push this data somewhere, a database for instance. Therefore version 1.3.0 introduces the **Publishing** module. You just need to create a handler derived from the **Publishing.PublishDataHandler** class, similar to the data acquisition part, and override it's **publishData** method. Here you can publish all or parts of the data contained in the shared dictionary to wherever you want. You then pass this handler to the **createPublishDataThread** method of **RaspendApplication**. The example below posts the whole shared dictionary as a JSON string to a PHP backend, which in turn writes the data into a MySQL database (see *raspend_demo* for details).
+
+``` python
+from raspend.application import RaspendApplication
+from raspend.utils import publishing as Publishing
+
+class PublishOneWireTemperatures(Publishing.PublishDataHandler):
+    def __init__(self, endPointURL, userName, password):
+        self.endPoint = endPointURL
+        self.userName = userName
+        self.password = password
+
+    def prepare(self):
+        # Nothing to prepare so far.
+        pass
+
+    def publishData(self):
+        data = json.dumps(self.sharedDict)
+        try:
+            response = requests.post(self.endPoint, data, auth=(self.userName, self.password))
+            response.raise_for_status()
+        except HTTPError as http_err:
+            print("HTTP error occurred: {}".format(http_err))
+        except Exception as err:
+            print("Unexpected error occurred: {}".format(err))
+        else:
+            print(response.text)
+
+
+myApp.createPublishDataThread(PublishOneWireTemperatures("http://localhost/raspend_demo/api/post_data.php", username, password), 60)
+
+```
+
 The other idea is to expose different functionalities, such as switching on/off your door bell via GPIO, as a command you can send to your RPi via HTTP POST request. All you have to do is to encapsulate the functionality you want to make available to the outside world into a method of a Python class. Then instantiate your class and call the **addCommand** method of **RaspendApplication** providing the method you want to expose. Now you can execute your method using a simple HTTP POST request. 
 
 ``` python
@@ -87,9 +120,9 @@ myApp.run()
 
 ``` 
 
-When all initialization stuff is done (adding commands, creating data acquisition threads), then you start your application by calling the **run** method of **RaspendApplication**. The **RaspendApplication** class installs signal handlers for SIGTERM and SIGINT, so you can quit your application by pressing CTRL+C or sending one of the signals via the **kill** command of your shell.
+When all initialization stuff is done (adding commands, creating threads), then you start your application by calling the **run** method of **RaspendApplication**. The **RaspendApplication** class installs signal handlers for SIGTERM and SIGINT, so you can quit your application by pressing CTRL+C or sending one of the signals via the **kill** command of your shell.
 
-Please have a look at the examples included in this project to get a better understanding. *example1.py* and *example2.py* show how to do most of the work yourself, while *example3.py* shows you the most convenient way of using this framework.
+Please have a look at the examples included in this project to get a better understanding. *example1.py* and *example2.py* show how to do most of the work yourself, while *example3.py* shows you the most convenient way of using this framework. *example4.py* is identical to *example3.py* but extended by a **PublishDataHandler**. 
 
 ## How to use the HTTP interface?
 

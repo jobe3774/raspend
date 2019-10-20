@@ -15,6 +15,7 @@ $insertStmt = "INSERT INTO temperatures (`basement.party_room`," .
               " VALUES (?, ?, ?, ?, ?);";
 
 $stmt = $db->prepare($insertStmt);
+
 $succeeded = $stmt->execute(array($temperatures->basement->party_room, 
                                   $temperatures->basement->fitness_room, 
                                   $temperatures->basement->heating_room, 

@@ -2,16 +2,16 @@
 
 class Database 
 {
-  // Lokale Einstellungen
+  // local settings
   
   private $db_name  = "raspend_demo";
   private $host     = "localhost";
   private $username = "root";
   private $password = "";
 
-  // Entfernte Einstellungen
+  // remote settings
   /*
-  private $db_name  = "";
+  private $db_name  = "raspend_demo";
   private $host     = "";
   private $username = "";
   private $password = "";
