@@ -63,6 +63,10 @@ class PublishOneWireTemperatures(Publishing.PublishDataHandler):
         self.userName = userName
         self.password = password
 
+    def prepare(self):
+        # Nothing to prepare so far.
+        pass
+
     def publishData(self):
         data = json.dumps(self.sharedDict)
         try:
@@ -73,7 +77,6 @@ class PublishOneWireTemperatures(Publishing.PublishDataHandler):
         except Exception as err:
             print("Unexpected error occurred: {}".format(err))
         else:
-            #print("Succeeded")
             print(response.text)
         
 def main():
@@ -98,13 +101,13 @@ def main():
 
     myApp.updateSharedDict({"Starting Time" : time.asctime()})
 
-    myApp.createDataAcquisitionThread(ReadOneWireTemperature("basement", "party_room", "/sys/bus/w1/devices/23-000000000001/w1_slave"), 3)
-    myApp.createDataAcquisitionThread(ReadOneWireTemperature("basement", "heating_room", "/sys/bus/w1/devices/23-000000000002/w1_slave"), 3)
-    myApp.createDataAcquisitionThread(ReadOneWireTemperature("basement", "fitness_room", "/sys/bus/w1/devices/23-000000000003/w1_slave"), 3)
-    myApp.createDataAcquisitionThread(ReadOneWireTemperature("ground_floor", "kitchen", "/sys/bus/w1/devices/23-000000000004/w1_slave"), 3)
-    myApp.createDataAcquisitionThread(ReadOneWireTemperature("ground_floor", "living_room", "/sys/bus/w1/devices/23-000000000005/w1_slave"), 3)
+    myApp.createDataAcquisitionThread(ReadOneWireTemperature("basement", "party_room", "/sys/bus/w1/devices/23-000000000001/w1_slave"), 60)
+    myApp.createDataAcquisitionThread(ReadOneWireTemperature("basement", "heating_room", "/sys/bus/w1/devices/23-000000000002/w1_slave"), 60)
+    myApp.createDataAcquisitionThread(ReadOneWireTemperature("basement", "fitness_room", "/sys/bus/w1/devices/23-000000000003/w1_slave"), 60)
+    myApp.createDataAcquisitionThread(ReadOneWireTemperature("ground_floor", "kitchen", "/sys/bus/w1/devices/23-000000000004/w1_slave"), 60)
+    myApp.createDataAcquisitionThread(ReadOneWireTemperature("ground_floor", "living_room", "/sys/bus/w1/devices/23-000000000005/w1_slave"), 60)
 
-    myApp.createPublishDataThread(PublishOneWireTemperatures("http://localhost/raspend/api/post_data.php", username, password), 5)
+    myApp.createPublishDataThread(PublishOneWireTemperatures("http://localhost/raspend_demo/api/post_data.php", username, password), 60)
 
     myApp.run()
 

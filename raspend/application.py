@@ -88,7 +88,7 @@ class RaspendApplication():
 
     def updateSharedDict(self, other):
         """ Updates the shared dictionary with 'other'. 
-            Note: existing keys will be overwritten.
+            Note: existing keys will be overwritten!
         """
         self.__sharedDict.update(other)
         return len(self.__sharedDict)
@@ -120,7 +120,7 @@ class RaspendApplication():
             # Signal the shutdown flag, so the threads can quit their work.
             self.__shutdownFlag.set()
 
-            # Wait for all thread to end.
+            # Wait for all threads to end.
             for pubThread in self.__pubThreads:
                 pubThread.join()
 
