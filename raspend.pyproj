@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{d0fd4413-717c-4da2-b189-4cc8bdecbc68}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>Examples\example3.py</StartupFile>
+    <StartupFile>Examples\example4.py</StartupFile>
     <SearchPath />
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
@@ -23,6 +23,7 @@
   <ItemGroup>
     <Compile Include="Examples\example1.py" />
     <Compile Include="Examples\example2.py" />
+    <Compile Include="Examples\example4.py" />
     <Compile Include="Examples\example3.py">
       <SubType>Code</SubType>
     </Compile>
@@ -30,6 +31,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="raspend\http.py" />
+    <Compile Include="raspend\utils\publishing.py" />
     <Compile Include="setup.py">
       <SubType>Code</SubType>
     </Compile>

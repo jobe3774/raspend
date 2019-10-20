@@ -14,6 +14,7 @@ from .http import RaspendHTTPServerThread
 from .utils import serviceshutdownhandling as ServiceShutdownHandling
 from .utils import dataacquisition as DataAcquisition
 from .utils import commandmapping as CommandMapping
+from .utils import publishing as Publishing
 
 class RaspendApplication():
     """ This class handles the main loop for a raspend based application.
@@ -25,6 +26,9 @@ class RaspendApplication():
 
         # A list holding instances of DataAcquisitionThread 
         self.__daqThreads = list()
+
+        # A list holding instances of PublishDataThread
+        self.__pubThreads = list()
 
         # The dictionary holding user's commands he wants to expose.
         self.__cmdMap = CommandMapping.CommandMap()
@@ -58,6 +62,23 @@ class RaspendApplication():
 
         return len(self.__daqThreads)
 
+    def createPublishDataThread(self, publishDataHandler, threadSleep=1):
+        """ This method creates a new instance of 'Publishing.PublishDataThread'.
+            Make sure that the handler you provide is derived from 'Publishing.PublishDataHandler'!
+        """
+        if not isinstance(publishDataHandler, Publishing.PublishDataHandler):
+            raise TypeError("Your 'PublishDataHandler' must be derived from 'Publishing.PublishDataHandler'!")
+        
+        publishDataHandler.setSharedDict(self.__sharedDict)
+
+        publishDataThread = Publishing.PublishDataThread(threadSleep, 
+                                                         self.__shutdownFlag, 
+                                                         self.__dataLock, 
+                                                         publishDataHandler)
+        self.__pubThreads.append(publishDataThread)
+
+        return len(self.__pubThreads)
+
     def addCommand(self, callbackMethod):
         """ Adds a new command to the command map of your application.
         """
@@ -67,7 +88,7 @@ class RaspendApplication():
 
     def updateSharedDict(self, other):
         """ Updates the shared dictionary with 'other'. 
-            Note: existing keys will be overwritten.
+            Note: existing keys will be overwritten!
         """
         self.__sharedDict.update(other)
         return len(self.__sharedDict)
@@ -88,6 +109,9 @@ class RaspendApplication():
             for daqThread in self.__daqThreads:
                 daqThread.start()
 
+            for pubThread in self.__pubThreads:
+                pubThread.start()
+
             # Keep primary thread or main loop alive.
             while True:
                 time.sleep(0.5)
@@ -95,9 +119,14 @@ class RaspendApplication():
         except ServiceShutdownHandling.ServiceShutdownException:
             # Signal the shutdown flag, so the threads can quit their work.
             self.__shutdownFlag.set()
-            # Wait for all thread to end.
+
+            # Wait for all threads to end.
+            for pubThread in self.__pubThreads:
+                pubThread.join()
+
             for daqThread in self.__daqThreads:
                 daqThread.join()
+
             httpd.join()
 
         except Exception as e:
