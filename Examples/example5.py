@@ -68,8 +68,8 @@ class PublishOneWireTemperatures(Publishing.PublishDataHandler):
         pass
 
     def publishData(self):
-        data = json.dumps(self.sharedDict)
         try:
+            data = json.dumps(self.sharedDict)
             response = requests.post(self.endPoint, data, auth=(self.userName, self.password))
             response.raise_for_status()
         except HTTPError as http_err:
@@ -119,9 +119,11 @@ def main():
     myApp.createDataAcquisitionThread(ReadOneWireTemperature("ground_floor", "kitchen", "/sys/bus/w1/devices/23-000000000004/w1_slave"), 60)
     myApp.createDataAcquisitionThread(ReadOneWireTemperature("ground_floor", "living_room", "/sys/bus/w1/devices/23-000000000005/w1_slave"), 60)
 
-    #myApp.createPublishDataThread(PublishOneWireTemperatures("http://localhost/raspend_demo/api/post_data.php", username, password), 60)
+    myApp.createPublishDataThread(PublishOneWireTemperatures("http://localhost/raspend_demo/api/post_data.php", username, password), 60)
 
-    myApp.createScheduledPublishDataThread(WriteOneWireTemperaturesToFile("./1wire.csv"), (16, 46), "h")
+    myApp.createScheduledPublishDataThread(WriteOneWireTemperaturesToFile("./1wire.csv"), 
+                                           Publishing.ScheduledStartTime(16, 53, 00), 
+                                           Publishing.RepetitionType.HOURLY)
 
     myApp.run()
 

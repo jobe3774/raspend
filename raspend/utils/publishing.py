@@ -9,6 +9,8 @@
 
 import threading
 from datetime import datetime, timedelta
+from enum import Enum
+from collections import namedtuple
 
 class PublishDataHandler():
     """ Base class for a handler which published data or parts of data store in the shared dictionary.
@@ -76,37 +78,42 @@ class PublishDataThread(threading.Thread):
             self.dataLock.release()
             self.shutdownFlag.wait(self.threadSleep)
 
+class RepetitionType(Enum):
+    WEEKLY = 1
+    DAILY = 2
+    HOURLY = 3
+    MINUTELY = 4
+
+ScheduledStartTime = namedtuple("ScheduledStartTime", "hour minute second")
+
 class ScheduledPublishDataThread(PublishDataThread):
     def __init__(self, 
-                 startTime: "A 2-tuple containing starting hour and minute", 
-                 repetionFlag: "'w' (weekly), 'd' (daily), 'h' (hourly)", 
+                 scheduledStartTime, 
+                 repetionType, 
                  shutdownFlag = None, dataLock = None, publishDataHandler = None):
 
-        if repetionFlag.lower() not in "wdh":
-            raise ValueError("'repetionFlag' must be 'w' (weekly), 'd' (daily) or 'h' (hourly)")
+        if not isinstance(repetionType, RepetitionType):
+            raise ValueError("'repetionType' must be of type 'RepetitionType'.")
 
-        self.startTime = startTime
-        self.repetionFlag = repetionFlag
+        if not isinstance(scheduledStartTime, ScheduledStartTime):
+            raise ValueError("'scheduledStartTime' must be of type 'ScheduledStartTime'.")
+
+        self.scheduledStartTime = scheduledStartTime
+        self.repetionType = repetionType
 
         return super().__init__(0, shutdownFlag, dataLock, publishDataHandler)
 
     def getTimedeltaFactors(self):
-        if self.repetionFlag == "w":
+        weekly = daily = hourly = minutely = 0
+        if self.repetionType == RepetitionType.WEEKLY:
             weekly = 1
-        else:
-            weekly = 0
-
-        if self.repetionFlag == "d":
+        if self.repetionType == RepetitionType.DAILY:
             daily = 1
-        else:
-            daily = 0
-
-        if self.repetionFlag == "h":
+        if self.repetionType == RepetitionType.HOURLY:
             hourly = 1
-        else:
-            hourly = 0
-
-        return weekly, daily, hourly
+        if self.repetionType == RepetitionType.MINUTELY:
+            minutely = 1
+        return weekly, daily, hourly, minutely
 
     def run(self):
         """ The thread loop runs until 'shutdownFlag' has been signaled. 
@@ -116,18 +123,18 @@ class ScheduledPublishDataThread(PublishDataThread):
         self.publishDataHandler.prepare()
         self.dataLock.release()
         
-        weekly, daily, hourly = self.getTimedeltaFactors()
+        weekly, daily, hourly, minutely = self.getTimedeltaFactors()
 
         # Calculate the initial timeout, which is the number of seconds from now to start time.
         tNow = datetime.now()
-        t0 = datetime(tNow.year, tNow.month, tNow.day, self.startTime[0], self.startTime[1], 0, 0)
+        t0 = datetime(tNow.year, tNow.month, tNow.day, self.scheduledStartTime.hour, self.scheduledStartTime.minute, self.scheduledStartTime.second)
 
         timeout = (t0 - tNow).total_seconds()
 
         # If timeout is negativ, then we already passed start time. 
         # In that case we calculate the timeout for the coming iteration.
-        if timeout < 0.0:
-            t1 = t0 + timedelta(days = 1 * daily, weeks = 1 * weekly, hours = 1 * hourly)
+        while timeout < 0.0:
+            t1 = t0 + timedelta(days = 1 * daily, weeks = 1 * weekly, hours = 1 * hourly, minutes = 1 * minutely)
             timeout = (t1 - datetime.now()).total_seconds()
             t0 = t1
 
@@ -139,7 +146,7 @@ class ScheduledPublishDataThread(PublishDataThread):
             # release lock
             self.dataLock.release()
 
-            t1 = t0 + timedelta(days = 1 * daily, weeks = 1 * weekly, hours = 1 * hourly)
+            t1 = t0 + timedelta(days = 1 * daily, weeks = 1 * weekly, hours = 1 * hourly, minutes = 1 * minutely)
             timeout = (t1 - datetime.now()).total_seconds()
             t0 = t1
         
