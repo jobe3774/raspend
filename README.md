@@ -6,7 +6,7 @@ As you can imagine **raspend** is the abbreviation for **rasp**berry back**end**
 
 ## Motivation
 
-Since I am doing a lot of home automation stuff on the Raspberry Pi and since the third Python script for that had the same structure, I decided to create an easy to use framework to simplify my life for when I start my next project on my RPi. Further I just wanted to strengthen my Python skills. This is why I didn't use any of the available frameworks such as flask or wsgiref.
+Since I am doing a lot of home automation stuff on the Raspberry Pi and since the third Python script for that had the same structure, I decided to create an easy to use framework to simplify my life for when I start my next project on my RPi. May the framework support you in developing great applications on the RPi or on any other platform.
 
 ## Now, what does this framework provide?
 
@@ -72,8 +72,8 @@ class PublishOneWireTemperatures(Publishing.PublishDataHandler):
         pass
 
     def publishData(self):
-        data = json.dumps(self.sharedDict)
         try:
+            data = json.dumps(self.sharedDict)
             response = requests.post(self.endPoint, data, auth=(self.userName, self.password))
             response.raise_for_status()
         except HTTPError as http_err:
@@ -83,12 +83,34 @@ class PublishOneWireTemperatures(Publishing.PublishDataHandler):
         else:
             print(response.text)
 
-
 myApp.createPublishDataThread(PublishOneWireTemperatures("http://localhost/raspend_demo/api/post_data.php", username, password), 60)
 
 ```
 
-The other idea is to expose different functionalities, such as switching on/off your door bell via GPIO, as a command you can send to your RPi via HTTP POST request. All you have to do is to encapsulate the functionality you want to make available to the outside world into a method of a Python class. Then instantiate your class and call the **addCommand** method of **RaspendApplication** providing the method you want to expose. Now you can execute your method using a simple HTTP POST request. 
+Sometimes you probably only want to publish data on an hourly, daily or perhaps weekly basis. The above mentioned **PublishDataThread** is less suitable for this. Starting with version 1.4.0, the **ScheduledPublishDataThread** is introduced. Similar to creating a **PublishDataThread**, you call the **createScheduledPublishDataThread** method of **RaspendApplication**. In the first parameter, pass a handler derived from the **Publishing.PublishDataHandler** class. In the second parameter, pass the scheduled start time as an instance of **Publishing.ScheduledStartTime**. This is a *namedtuple* consisting of three values: hour, minute, and second. If you pass *None* instead, the current local time will be used as start time. In the third parameter, you specify the repetition rate. Here you use one of the predefined values of **Publishing.RepetitionType**. If you pass *None* it defaults to **RepetitionType.DAILY**. The following example starts a **ScheduledPublishDataThread**, that calls the **publishData** method of **WriteOneWireTemperaturesToFile** once every day at 11 p.m.
+
+``` python
+from raspend.application import RaspendApplication
+from raspend.utils import publishing as Publishing
+
+class WriteOneWireTemperaturesToFile(Publishing.PublishDataHandler):
+        def __init__(self, fileName):
+            self.fileName = fileName
+            return
+
+        def prepare(self):
+            return
+
+        def publishData(self):
+            print ("{} - Writing temperatures to '{}'.".format(time.asctime(), self.fileName))
+            return
+
+myApp.createScheduledPublishDataThread(WriteOneWireTemperaturesToFile("./1wire.csv"), 
+                                       Publishing.ScheduledStartTime(23, 0, 0), 
+                                       Publishing.RepetitionType.DAILY)
+```
+
+The other idea of this framework is to expose different functionalities, such as switching on/off your door bell via GPIO, as a command you can send to your RPi via HTTP POST request. All you have to do is to encapsulate the functionality you want to make available to the outside world into a method of a Python class. Then instantiate your class and call the **addCommand** method of **RaspendApplication** providing the method you want to expose. Now you can execute your method using a simple HTTP POST request. 
 
 ``` python
 from raspend.application import RaspendApplication
@@ -122,7 +144,7 @@ myApp.run()
 
 When all initialization stuff is done (adding commands, creating threads), then you start your application by calling the **run** method of **RaspendApplication**. The **RaspendApplication** class installs signal handlers for SIGTERM and SIGINT, so you can quit your application by pressing CTRL+C or sending one of the signals via the **kill** command of your shell.
 
-Please have a look at the examples included in this project to get a better understanding. *example1.py* and *example2.py* show how to do most of the work yourself, while *example3.py* shows you the most convenient way of using this framework. *example4.py* is identical to *example3.py* but extended by a **PublishDataHandler**. 
+Please have a look at the examples included in this project to get a better understanding. *example1.py* and *example2.py* show how to do most of the work yourself, while *example3.py* shows you the most convenient way of using this framework. *example4.py* is identical to *example3.py* but extended by a **PublishDataHandler**. *example5.py* extends *example4.py* with a **ScheduledPublishDataThread**.
 
 ## How to use the HTTP interface?
 

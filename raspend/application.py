@@ -79,6 +79,24 @@ class RaspendApplication():
 
         return len(self.__pubThreads)
 
+    def createScheduledPublishDataThread(self, publishDataHandler, scheduledStartTime, repetionType):
+        """ This method creates a new instance of 'Publishing.ScheduledPublishDataThread'.
+            Make sure that the handler you provide is derived from 'Publishing.PublishDataHandler'!
+        """
+        if not isinstance(publishDataHandler, Publishing.PublishDataHandler):
+            raise TypeError("Your 'PublishDataHandler' must be derived from 'Publishing.PublishDataHandler'!")
+        
+        publishDataHandler.setSharedDict(self.__sharedDict)
+
+        scheduledPublishDataThread = Publishing.ScheduledPublishDataThread(scheduledStartTime, 
+                                                                           repetionType, 
+                                                                           self.__shutdownFlag, 
+                                                                           self.__dataLock, 
+                                                                           publishDataHandler)
+        self.__pubThreads.append(scheduledPublishDataThread)
+
+        return len(self.__pubThreads)
+
     def addCommand(self, callbackMethod):
         """ Adds a new command to the command map of your application.
         """
