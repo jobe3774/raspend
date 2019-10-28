@@ -79,24 +79,50 @@ class PublishDataThread(threading.Thread):
             self.shutdownFlag.wait(self.threadSleep)
 
 class RepetitionType(Enum):
+    """ Constants describing the repetition rate of a scheduled publish data thread.
+    """
     WEEKLY = 1
     DAILY = 2
     HOURLY = 3
     MINUTELY = 4
 
+# A tuple for passing a start time to the constructor of 'ScheduledPublishDataThread'.
 ScheduledStartTime = namedtuple("ScheduledStartTime", "hour minute second")
 
 class ScheduledPublishDataThread(PublishDataThread):
+    """ A thread class which handles cyclic data publishing.
+
+        An instance of this class needs a lock - object for controlling access to its 'publishDataHandler', an event - object for 
+        notifying the thread to exit and an object of a class derived from 'PublishDataHandler'. Further it needs a start time and
+        a repetition type.
+    """
     def __init__(self, 
-                 scheduledStartTime, 
-                 repetionType, 
-                 shutdownFlag = None, dataLock = None, publishDataHandler = None):
+                 scheduledStartTime = None, 
+                 repetionType = None, 
+                 shutdownFlag = None, 
+                 dataLock = None, 
+                 publishDataHandler = None):
+        """ Contructs a new instance of 'PublishDataThread'.
+            
+            Parameters:
+            
+            scheduledStartTime  - the start time of the first call to the handler's publishData method.
+            repetionType        - the repetition rate (weekly, daily, hourly or minutely)
+            shutdownFlag        - a threading.event() object for notifying the thread to exit.
+            dataLock            - a threading.Lock() object for controlling access to the 'dataAcquisitionHandler'.
+            publishDataHandler  - an object of a class derived from 'PublishDataHandler'.
+        """
 
-        if not isinstance(repetionType, RepetitionType):
-            raise ValueError("'repetionType' must be of type 'RepetitionType'.")
+        if repetionType and not isinstance(repetionType, RepetitionType):
+            raise ValueError("'repetionType' must be of type 'RepetitionType' or None.")
+        elif repetionType is None:
+            repetionType = RepetitionType.DAILY
 
-        if not isinstance(scheduledStartTime, ScheduledStartTime):
-            raise ValueError("'scheduledStartTime' must be of type 'ScheduledStartTime'.")
+        if scheduledStartTime and not isinstance(scheduledStartTime, ScheduledStartTime):
+            raise ValueError("'scheduledStartTime' must be of type 'ScheduledStartTime' or None.")
+        elif scheduledStartTime is None:
+            tNow = datetime.now()
+            scheduledStartTime = ScheduledStartTime(tNow.hour, tNow.minute, tNow.second)
 
         self.scheduledStartTime = scheduledStartTime
         self.repetionType = repetionType
@@ -104,6 +130,8 @@ class ScheduledPublishDataThread(PublishDataThread):
         return super().__init__(0, shutdownFlag, dataLock, publishDataHandler)
 
     def getTimedeltaFactors(self):
+        """ Returns the factors used to calculate the timedelta.
+        """
         weekly = daily = hourly = minutely = 0
         if self.repetionType == RepetitionType.WEEKLY:
             weekly = 1
@@ -131,7 +159,7 @@ class ScheduledPublishDataThread(PublishDataThread):
 
         timeout = (t0 - tNow).total_seconds()
 
-        # If timeout is negativ, then we already passed start time. 
+        # If timeout is negative, then we already passed start time. 
         # In that case we calculate the timeout for the coming iteration.
         while timeout < 0.0:
             t1 = t0 + timedelta(days = 1 * daily, weeks = 1 * weekly, hours = 1 * hourly, minutes = 1 * minutely)

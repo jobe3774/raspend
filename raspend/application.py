@@ -79,7 +79,7 @@ class RaspendApplication():
 
         return len(self.__pubThreads)
 
-    def createScheduledPublishDataThread(self, publishDataHandler, startTime, repetitionFlag):
+    def createScheduledPublishDataThread(self, publishDataHandler, scheduledStartTime, repetionType):
         """ This method creates a new instance of 'Publishing.ScheduledPublishDataThread'.
             Make sure that the handler you provide is derived from 'Publishing.PublishDataHandler'!
         """
@@ -88,8 +88,8 @@ class RaspendApplication():
         
         publishDataHandler.setSharedDict(self.__sharedDict)
 
-        scheduledPublishDataThread = Publishing.ScheduledPublishDataThread(startTime, 
-                                                                           repetitionFlag, 
+        scheduledPublishDataThread = Publishing.ScheduledPublishDataThread(scheduledStartTime, 
+                                                                           repetionType, 
                                                                            self.__shutdownFlag, 
                                                                            self.__dataLock, 
                                                                            publishDataHandler)

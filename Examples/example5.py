@@ -85,7 +85,8 @@ class WriteOneWireTemperaturesToFile(Publishing.PublishDataHandler):
             return
 
         def prepare(self):
-            pass
+            #  Here we could check, if the given file exists and if not create it.
+            return
 
         def publishData(self):
             print ("{} - Writing temperatures to '{}'.".format(time.asctime(), self.fileName))
@@ -93,7 +94,7 @@ class WriteOneWireTemperaturesToFile(Publishing.PublishDataHandler):
 
 def main():
 
-    cmdLineParser = argparse.ArgumentParser(prog="example4", usage="%(prog)s [options]")
+    cmdLineParser = argparse.ArgumentParser(prog="example5", usage="%(prog)s [options]")
     cmdLineParser.add_argument("--port", help="The port the server should listen on", type=int, required=True)
 
     try: 
@@ -122,9 +123,8 @@ def main():
     myApp.createPublishDataThread(PublishOneWireTemperatures("http://localhost/raspend_demo/api/post_data.php", username, password), 60)
 
     myApp.createScheduledPublishDataThread(WriteOneWireTemperaturesToFile("./1wire.csv"), 
-                                           Publishing.ScheduledStartTime(16, 53, 00), 
-                                           Publishing.RepetitionType.HOURLY)
-
+                                           Publishing.ScheduledStartTime(23, 0, 0), 
+                                           Publishing.RepetitionType.DAILY)
     myApp.run()
 
     print ("Exit")
