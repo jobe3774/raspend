@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{d0fd4413-717c-4da2-b189-4cc8bdecbc68}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>Examples\example5.py</StartupFile>
+    <StartupFile>Examples\example6.py</StartupFile>
     <SearchPath />
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
@@ -28,11 +28,13 @@
     <Compile Include="Examples\example3.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Examples\example6.py" />
     <Compile Include="raspend\application.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="raspend\http.py" />
     <Compile Include="raspend\utils\publishing.py" />
+    <Compile Include="raspend\utils\workerthreads.py" />
     <Compile Include="setup.py">
       <SubType>Code</SubType>
     </Compile>

@@ -15,6 +15,7 @@ from .utils import serviceshutdownhandling as ServiceShutdownHandling
 from .utils import dataacquisition as DataAcquisition
 from .utils import commandmapping as CommandMapping
 from .utils import publishing as Publishing
+from .utils import workerthreads as WorkerThreads
 
 class RaspendApplication():
     """ This class handles the main loop for a raspend based application.
@@ -24,11 +25,8 @@ class RaspendApplication():
         # The server port
         self.__port = port
 
-        # A list holding instances of DataAcquisitionThread 
-        self.__daqThreads = list()
-
-        # A list holding instances of PublishDataThread
-        self.__pubThreads = list()
+        # A list holding instances of worker threads.
+        self.__workers = list()
 
         # The dictionary holding user's commands he wants to expose.
         self.__cmdMap = CommandMapping.CommandMap()
@@ -58,9 +56,9 @@ class RaspendApplication():
                                                            self.__shutdownFlag, 
                                                            self.__dataLock, 
                                                            dataAcquisitionHandler)
-        self.__daqThreads.append(dataThread)
+        self.__workers.append(dataThread)
 
-        return len(self.__daqThreads)
+        return len(self.__workers)
 
     def createPublishDataThread(self, publishDataHandler, threadSleep=1):
         """ This method creates a new instance of 'Publishing.PublishDataThread'.
@@ -75,9 +73,9 @@ class RaspendApplication():
                                                          self.__shutdownFlag, 
                                                          self.__dataLock, 
                                                          publishDataHandler)
-        self.__pubThreads.append(publishDataThread)
+        self.__workers.append(publishDataThread)
 
-        return len(self.__pubThreads)
+        return len(self.__workers)
 
     def createScheduledPublishDataThread(self, publishDataHandler, scheduledStartTime, repetionType):
         """ This method creates a new instance of 'Publishing.ScheduledPublishDataThread'.
@@ -93,9 +91,33 @@ class RaspendApplication():
                                                                            self.__shutdownFlag, 
                                                                            self.__dataLock, 
                                                                            publishDataHandler)
-        self.__pubThreads.append(scheduledPublishDataThread)
+        self.__workers.append(scheduledPublishDataThread)
 
-        return len(self.__pubThreads)
+        return len(self.__workers)
+
+    def createWorkerThread(self, threadHandler, waitTimeout):
+        if not isinstance(threadHandler, WorkerThreads.AbstractThreadHandler):
+            raise TypeError("Your 'threadHandler' must be derived from 'WorkerThreads.AbstractThreadHandler'!")
+
+        threadHandler.setSharedDict(self.__sharedDict)
+        worker = WorkerThreads.WorkerThread(self.__shutdownFlag, self.__dataLock, threadHandler, waitTimeout)
+        self.__workers.append(worker)
+        return len(self.__workers)
+
+    def createScheduledWorkerThread(self, threadHandler, scheduledTime, scheduledDate=None, repetitionType=None, repetitionFactor=1):
+        if not isinstance(threadHandler, WorkerThreads.AbstractThreadHandler):
+            raise TypeError("Your 'threadHandler' must be derived from 'WorkerThreads.AbstractThreadHandler'!")
+
+        threadHandler.setSharedDict(self.__sharedDict)
+        worker = WorkerThreads.ScheduledWorkerThread(self.__shutdownFlag, 
+                                                     self.__dataLock, 
+                                                     threadHandler, 
+                                                     scheduledTime, 
+                                                     scheduledDate, 
+                                                     repetitionType, 
+                                                     repetitionFactor)
+        self.__workers.append(worker)
+        return len(self.__workers)
 
     def addCommand(self, callbackMethod):
         """ Adds a new command to the command map of your application.
@@ -124,11 +146,8 @@ class RaspendApplication():
             # Start our threads.
             httpd.start()
 
-            for daqThread in self.__daqThreads:
-                daqThread.start()
-
-            for pubThread in self.__pubThreads:
-                pubThread.start()
+            for worker in self.__workers:
+                worker.start()
 
             # Keep primary thread or main loop alive.
             while True:
@@ -139,11 +158,8 @@ class RaspendApplication():
             self.__shutdownFlag.set()
 
             # Wait for all threads to end.
-            for pubThread in self.__pubThreads:
-                pubThread.join()
-
-            for daqThread in self.__daqThreads:
-                daqThread.join()
+            for worker in self.__workers:
+                worker.join()
 
             httpd.join()
 
