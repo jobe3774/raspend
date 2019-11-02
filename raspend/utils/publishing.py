@@ -114,12 +114,12 @@ class ScheduledPublishDataThread(PublishDataThread):
         """
 
         if repetionType and not isinstance(repetionType, RepetitionType):
-            raise ValueError("'repetionType' must be of type 'RepetitionType' or None.")
+            raise TypeError("'repetionType' must be of type 'RepetitionType' or None.")
         elif repetionType is None:
             repetionType = RepetitionType.DAILY
 
         if scheduledStartTime and not isinstance(scheduledStartTime, ScheduledStartTime):
-            raise ValueError("'scheduledStartTime' must be of type 'ScheduledStartTime' or None.")
+            raise TypeError("'scheduledStartTime' must be of type 'ScheduledStartTime' or None.")
         elif scheduledStartTime is None:
             tNow = datetime.now()
             scheduledStartTime = ScheduledStartTime(tNow.hour, tNow.minute, tNow.second)

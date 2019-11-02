@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  Classes for threaded data acquiring and publishing.
+#  Classes to simplify multithreading.
 #  
 #  License: MIT
 #  
@@ -12,7 +12,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from datetime import datetime, date, time, timedelta
 
-class AbstractThreadHandler(ABC):
+class ThreadHandlerBase(ABC):
     """ This abstract class describes the basic structure of a raspend thread handler.
         Derive this class and implement the 'prepare' and 'invoke' methods.
         'prepare' is called prior to running the thread's loop and 'invoke' is called 
@@ -47,13 +47,13 @@ class WorkerThreadBase(ABC, threading.Thread):
         """ Parameters:
             shutdownEvent - an 'Event' object for gracefully shutting down this thread.
             accessLock - a 'Lock' object for synchronizing access to the thread handler.
-            threadHandler - an instance of a class deriving 'AbstractThreadHandler'.
+            threadHandler - an instance of a class deriving 'ThreadHandlerBase'.
         """
         threading.Thread.__init__(self)
         self.shutdownEvent = shutdownEvent
         self.accessLock = accessLock
-        if not isinstance(threadHandler, AbstractThreadHandler):
-            raise ValueError("'threadHandler' must be a derivative of 'AbstractThreadHandler'.")
+        if not isinstance(threadHandler, ThreadHandlerBase):
+            raise TypeError("'threadHandler' must be a derivative of 'ThreadHandlerBase'.")
         self.threadHandler = threadHandler
         return
 
@@ -104,7 +104,7 @@ class ScheduledWorkerThread(WorkerThreadBase):
         self.scheduledStart = datetime.combine(scheduledDate, scheduledTime)
 
         if repetitionType and not isinstance(repetitionType, ScheduleRepetitionType):
-            raise ValueError("'repetionType' must be of type 'ScheduleRepetitionType' or None.")
+            raise TypeError("'repetionType' must be of type 'ScheduleRepetitionType' or None.")
         elif repetitionType is None:
             repetitionType = ScheduleRepetitionType.DAILY
 

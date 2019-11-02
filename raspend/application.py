@@ -96,8 +96,8 @@ class RaspendApplication():
         return len(self.__workers)
 
     def createWorkerThread(self, threadHandler, waitTimeout):
-        if not isinstance(threadHandler, WorkerThreads.AbstractThreadHandler):
-            raise TypeError("Your 'threadHandler' must be derived from 'WorkerThreads.AbstractThreadHandler'!")
+        if not isinstance(threadHandler, WorkerThreads.ThreadHandlerBase):
+            raise TypeError("Your 'threadHandler' must be derived from 'WorkerThreads.ThreadHandlerBase'!")
 
         threadHandler.setSharedDict(self.__sharedDict)
         worker = WorkerThreads.WorkerThread(self.__shutdownFlag, self.__dataLock, threadHandler, waitTimeout)
@@ -105,8 +105,8 @@ class RaspendApplication():
         return len(self.__workers)
 
     def createScheduledWorkerThread(self, threadHandler, scheduledTime, scheduledDate=None, repetitionType=None, repetitionFactor=1):
-        if not isinstance(threadHandler, WorkerThreads.AbstractThreadHandler):
-            raise TypeError("Your 'threadHandler' must be derived from 'WorkerThreads.AbstractThreadHandler'!")
+        if not isinstance(threadHandler, WorkerThreads.ThreadHandlerBase):
+            raise TypeError("Your 'threadHandler' must be derived from 'WorkerThreads.ThreadHandlerBase'!")
 
         threadHandler.setSharedDict(self.__sharedDict)
         worker = WorkerThreads.ScheduledWorkerThread(self.__shutdownFlag, 

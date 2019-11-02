@@ -16,8 +16,6 @@ import getpass
 import json
 
 from raspend.application import RaspendApplication
-from raspend.utils import dataacquisition as DataAcquisition
-from raspend.utils import publishing as Publishing
 from raspend.utils import workerthreads as WorkerThreads
 
 class DoorBell():
@@ -36,7 +34,7 @@ class DoorBell():
     def getCurrentState(self):
         return self.doorBellState
 
-class ReadOneWireTemperature(WorkerThreads.AbstractThreadHandler):
+class ReadOneWireTemperature(WorkerThreads.ThreadHandlerBase):
     def __init__(self, groupId, sensorId, oneWireSensorPath = ""):
         # A groupId for grouping the temperature sensors
         self.groupId = groupId
@@ -58,7 +56,7 @@ class ReadOneWireTemperature(WorkerThreads.AbstractThreadHandler):
         self.sharedDict[self.groupId][self.sensorId] = temp
         return
 
-class PublishOneWireTemperatures(WorkerThreads.AbstractThreadHandler):
+class PublishOneWireTemperatures(WorkerThreads.ThreadHandlerBase):
     def __init__(self, endPointURL, userName, password):
         self.endPoint = endPointURL
         self.userName = userName
@@ -80,7 +78,7 @@ class PublishOneWireTemperatures(WorkerThreads.AbstractThreadHandler):
         else:
             print(response.text)
 
-class WriteOneWireTemperaturesToFile(WorkerThreads.AbstractThreadHandler):
+class WriteOneWireTemperaturesToFile(WorkerThreads.ThreadHandlerBase):
         def __init__(self, fileName):
             self.fileName = fileName
             return
