@@ -95,9 +95,12 @@ class ScheduledWorkerThread(WorkerThreadBase):
     """ A worker thread using a schedule date and time for doing an iteration.
         'repetitionType' and 'repetitionFactor' describe the frequency iterations take place.
     """
-    def __init__(self, shutdownEvent, accessLock, threadHandler, scheduledTime, scheduledDate=None, repetitionType=None, repetitionFactor=1):
+    def __init__(self, shutdownEvent, accessLock, threadHandler, scheduledTime=None, scheduledDate=None, repetitionType=None, repetitionFactor=1):
         super().__init__(shutdownEvent, accessLock, threadHandler)
         
+        if scheduledTime is None:
+            scheduledTime = datetime.now().time()
+
         if scheduledDate is None:
             scheduledDate = datetime.now().date()
 
@@ -107,6 +110,9 @@ class ScheduledWorkerThread(WorkerThreadBase):
             raise TypeError("'repetionType' must be of type 'ScheduleRepetitionType' or None.")
         elif repetitionType is None:
             repetitionType = ScheduleRepetitionType.DAILY
+
+        if repetitionFactor < 1:
+            raise ValueError("'repetitionFactor' must be 1 or greater.")
 
         self.repetitionType = repetitionType
         self.repetitionFactor = repetitionFactor

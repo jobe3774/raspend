@@ -16,7 +16,7 @@ import getpass
 import json
 
 from raspend.application import RaspendApplication
-from raspend.utils import workerthreads as WorkerThreads
+from raspend.utils.workerthreads import ThreadHandlerBase, ScheduleRepetitionType
 
 class DoorBell():
     def __init__(self, *args, **kwargs):
@@ -34,7 +34,7 @@ class DoorBell():
     def getCurrentState(self):
         return self.doorBellState
 
-class ReadOneWireTemperature(WorkerThreads.ThreadHandlerBase):
+class ReadOneWireTemperature(ThreadHandlerBase):
     def __init__(self, groupId, sensorId, oneWireSensorPath = ""):
         # A groupId for grouping the temperature sensors
         self.groupId = groupId
@@ -56,7 +56,7 @@ class ReadOneWireTemperature(WorkerThreads.ThreadHandlerBase):
         self.sharedDict[self.groupId][self.sensorId] = temp
         return
 
-class PublishOneWireTemperatures(WorkerThreads.ThreadHandlerBase):
+class PublishOneWireTemperatures(ThreadHandlerBase):
     def __init__(self, endPointURL, userName, password):
         self.endPoint = endPointURL
         self.userName = userName
@@ -78,7 +78,7 @@ class PublishOneWireTemperatures(WorkerThreads.ThreadHandlerBase):
         else:
             print(response.text)
 
-class WriteOneWireTemperaturesToFile(WorkerThreads.ThreadHandlerBase):
+class WriteOneWireTemperaturesToFile(ThreadHandlerBase):
         def __init__(self, fileName):
             self.fileName = fileName
             return
@@ -124,7 +124,7 @@ def main():
     myApp.createScheduledWorkerThread(WriteOneWireTemperaturesToFile("./1wire.csv"), 
                                       datetime.time(22, 30), 
                                       None, 
-                                      WorkerThreads.ScheduleRepetitionType.SECOND, 
+                                      ScheduleRepetitionType.SECOND, 
                                       15)
     
     myApp.run()

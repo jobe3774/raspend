@@ -12,103 +12,35 @@ Since I am doing a lot of home automation stuff on the Raspberry Pi and since th
 
 As 'backend' already suggests, this framework provides you with an easy way of creating a small HTTP web service on your RPi. The **RaspendApplication** class runs the **RaspendHTTPServerThread**, which is based on Python's **HTTPServer** class, to handle incoming HTTP requests. Besides that, this framework provides you with an easy way of acquiring data (e.g. temperatures measurements) in a multithreaded way.
 
-The one idea is, that the data acquisition threads you create all use one shared dictionary to store their data. The HTTP server thread knows this dictionary too and exposes it as a JSON string via HTTP GET requests.
+### Multithreading kept simple
 
-You only need to write a handler deriving the **DataAcquisitionHandler** class and call the **createDataAcquisitionThread** method of **RaspendApplication** to create a new instance of a **DataAcquisitionThread**. The **RaspendApplication** class manages the list of your threads.
+The one idea is, that all threads you create use the same shared dictionary to store their data. The HTTP server thread as well knows this shared dictionary and exposes it as a JSON string via HTTP GET requests.
 
+With raspend, creating threads is really simple and straight forward. All you need to do is, derive the **ThreadHandlerBase** class and implement the abstract methods *prepare* and *invoke*. The *prepare* method is called before the thread loop starts, while *invoke* will be called for every iteration of the thread loop. For tasks like cyclic reading temperature measurements you can use the **createWorkerThread** method of **RaspendApplication** to create a normal worker thread. **createWorkerThread** takes an instance of your thread handler and a timeout value in seconds as parameters. The thread will sleep for *timeout* seconds past every iteration.
+
+If you want a thread or task to do its work in a more scheduled way, such as run once a day, then you can use the **createScheduledWorkerThread** method of **RaspendApplication**. **createScheduleWorkerThread**, like **createWorkerThread**, takes an instance of your thread handler. But instead taking a timeout, you have to pass a start time, a start date, the type of repetition and repetition factor. If the start date is *None*, the current date will be used. If *repetitionType* is *None*, it defaults to **ScheduleRepetitionType.DAILY**. The repetition factor is applied to the repetition type. For example, if you need to write your temperature measurements to a file every 4 hours starting immediately, you would choose **ScheduleRepetitionType.HOURLY** with a repetition factor set to 4.
 
 ``` python
-from raspend.application import RaspendApplication
-from raspend.utils import dataacquisition as DataAcquisition
+myApp = RaspendApplication(args.port)
 
-class ReadOneWireTemperature(DataAcquisition.DataAcquisitionHandler):
-    def __init__(self, groupId, sensorId, oneWireSensorPath = ""):
-        # A groupId for grouping the temperature sensors
-        self.groupId = groupId
-        # The name or Id of your sensor under which you would read it's JSON value
-        self.sensorId = sensorId
-        # The path of your sensor within your system
-        self.oneWireSensorPath = oneWireSensorPath
+myApp.createWorkerThread(ReadOneWireTemperature("basement", "party_room", "/sys/bus/w1/devices/23-000000000001/w1_slave"), 60)
+myApp.createWorkerThread(ReadOneWireTemperature("basement", "heating_room", "/sys/bus/w1/devices/23-000000000002/w1_slave"), 60)
+myApp.createWorkerThread(ReadOneWireTemperature("basement", "fitness_room", "/sys/bus/w1/devices/23-000000000003/w1_slave"), 60)
+myApp.createWorkerThread(ReadOneWireTemperature("ground_floor", "kitchen", "/sys/bus/w1/devices/23-000000000004/w1_slave"), 60)
+myApp.createWorkerThread(ReadOneWireTemperature("ground_floor", "living_room", "/sys/bus/w1/devices/23-000000000005/w1_slave"), 60)
 
-    def prepare(self):
-        if self.groupId not in self.sharedDict:
-            self.sharedDict[self.groupId] = {}
-        self.sharedDict[self.groupId][self.sensorId] = 0
-        return
+myApp.createWorkerThread(PublishOneWireTemperatures("http://localhost/raspend_demo/api/post_data.php", username, password), 60)
 
-    def acquireData(self):
-        # If you use 1-Wire sensors like a DS18B20 you normally would read its w1_slave file like:
-        # /sys/bus/w1/devices/<the-sensor's system id>/w1_slave
-        temp = random.randint(18, 24)
-        self.sharedDict[self.groupId][self.sensorId] = temp
-        return
-
-myApp = RaspendApplication(8080)
-
-myApp.createDataAcquisitionThread(ReadOneWireTemperature("basement", "party_room", "/sys/bus/w1/devices/23-000000000001/w1_slave"), 30)
-myApp.createDataAcquisitionThread(ReadOneWireTemperature("basement", "heating_room", "/sys/bus/w1/devices/23-000000000002/w1_slave"), 30)
-myApp.createDataAcquisitionThread(ReadOneWireTemperature("basement", "fitness_room", "/sys/bus/w1/devices/23-000000000003/w1_slave"), 30)
-myApp.createDataAcquisitionThread(ReadOneWireTemperature("ground_floor", "kitchen", "/sys/bus/w1/devices/23-000000000004/w1_slave"), 30)
-myApp.createDataAcquisitionThread(ReadOneWireTemperature("ground_floor", "living_room", "/sys/bus/w1/devices/23-000000000005/w1_slave"), 30)
+myApp.createScheduledWorkerThread(WriteOneWireTemperaturesToFile("./1wire.csv"), 
+                                  None, 
+                                  None, 
+                                  ScheduleRepetitionType.HOURLY, 
+                                  4)
 
 myApp.run()
-
 ```
 
-Though your acquired data is available via raspend's HTTP interface, you probably want to push this data somewhere, a database for instance. Therefore version 1.3.0 introduces the **Publishing** module. You just need to create a handler derived from the **Publishing.PublishDataHandler** class, similar to the data acquisition part, and override it's **publishData** method. Here you can publish all or parts of the data contained in the shared dictionary to wherever you want. You then pass this handler to the **createPublishDataThread** method of **RaspendApplication**. The example below posts the whole shared dictionary as a JSON string to a PHP backend, which in turn writes the data into a MySQL database (see *raspend_demo* for details).
-
-``` python
-from raspend.application import RaspendApplication
-from raspend.utils import publishing as Publishing
-
-class PublishOneWireTemperatures(Publishing.PublishDataHandler):
-    def __init__(self, endPointURL, userName, password):
-        self.endPoint = endPointURL
-        self.userName = userName
-        self.password = password
-
-    def prepare(self):
-        # Nothing to prepare so far.
-        pass
-
-    def publishData(self):
-        try:
-            data = json.dumps(self.sharedDict)
-            response = requests.post(self.endPoint, data, auth=(self.userName, self.password))
-            response.raise_for_status()
-        except HTTPError as http_err:
-            print("HTTP error occurred: {}".format(http_err))
-        except Exception as err:
-            print("Unexpected error occurred: {}".format(err))
-        else:
-            print(response.text)
-
-myApp.createPublishDataThread(PublishOneWireTemperatures("http://localhost/raspend_demo/api/post_data.php", username, password), 60)
-
-```
-
-Sometimes you probably only want to publish data on an hourly, daily or perhaps weekly basis. The above mentioned **PublishDataThread** is less suitable for this. Starting with version 1.4.0, the **ScheduledPublishDataThread** is introduced. Similar to creating a **PublishDataThread**, you call the **createScheduledPublishDataThread** method of **RaspendApplication**. In the first parameter, pass a handler derived from the **Publishing.PublishDataHandler** class. In the second parameter, pass the scheduled start time as an instance of **Publishing.ScheduledStartTime**. This is a *namedtuple* consisting of three values: hour, minute, and second. If you pass *None* instead, the current local time will be used as start time. In the third parameter, you specify the repetition rate. Here you use one of the predefined values of **Publishing.RepetitionType**. If you pass *None* it defaults to **RepetitionType.DAILY**. The following example starts a **ScheduledPublishDataThread**, that calls the **publishData** method of **WriteOneWireTemperaturesToFile** once every day at 11 p.m.
-
-``` python
-from raspend.application import RaspendApplication
-from raspend.utils import publishing as Publishing
-
-class WriteOneWireTemperaturesToFile(Publishing.PublishDataHandler):
-        def __init__(self, fileName):
-            self.fileName = fileName
-            return
-
-        def prepare(self):
-            return
-
-        def publishData(self):
-            print ("{} - Writing temperatures to '{}'.".format(time.asctime(), self.fileName))
-            return
-
-myApp.createScheduledPublishDataThread(WriteOneWireTemperaturesToFile("./1wire.csv"), 
-                                       Publishing.ScheduledStartTime(23, 0, 0), 
-                                       Publishing.RepetitionType.DAILY)
-```
+### Expose methods you want to call from remote
 
 The other idea of this framework is to expose different functionalities, such as switching on/off your door bell via GPIO, as a command you can send to your RPi via HTTP POST request. All you have to do is to encapsulate the functionality you want to make available to the outside world into a method of a Python class. Then instantiate your class and call the **addCommand** method of **RaspendApplication** providing the method you want to expose. Now you can execute your method using a simple HTTP POST request. 
 
