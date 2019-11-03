@@ -122,7 +122,7 @@ def main():
     myApp.createWorkerThread(PublishOneWireTemperatures("http://localhost/raspend_demo/api/post_data.php", username, password), 60)
 
     myApp.createScheduledWorkerThread(WriteOneWireTemperaturesToFile("./1wire.csv"), 
-                                      datetime.time(22, 30), 
+                                      None, 
                                       None, 
                                       ScheduleRepetitionType.SECOND, 
                                       15)

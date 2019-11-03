@@ -21,7 +21,7 @@ class RaspendApplication():
     """ This class handles the main loop for a raspend based application.
     """
 
-    def __init__(self, port, sharedDict=None):
+    def __init__(self, port=None, sharedDict=None):
         # The server port
         self.__port = port
 
@@ -140,11 +140,12 @@ class RaspendApplication():
             # Initialize signal handler to be able to have a graceful shutdown.
             ServiceShutdownHandling.initServiceShutdownHandling()
 
+            httpd = None
             # The HTTP server thread - our HTTP interface
-            httpd = RaspendHTTPServerThread(self.__shutdownFlag, self.__dataLock, self.__sharedDict, self.__cmdMap, self.__port)
-
-            # Start our threads.
-            httpd.start()
+            if self.__port != None:
+                httpd = RaspendHTTPServerThread(self.__shutdownFlag, self.__dataLock, self.__sharedDict, self.__cmdMap, self.__port)
+                # Start our threads.
+                httpd.start()
 
             for worker in self.__workers:
                 worker.start()
@@ -161,7 +162,8 @@ class RaspendApplication():
             for worker in self.__workers:
                 worker.join()
 
-            httpd.join()
+            if httpd:
+                httpd.join()
 
         except Exception as e:
             print ("An unexpected error occured. Error: {}".format(e))
