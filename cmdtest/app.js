@@ -1,5 +1,5 @@
-var g_baseUrl = "http://raspberrypi:8090";
-//var g_baseUrl = "http://localhost:8090";
+//var g_baseUrl = "http://raspberrypi:8080";
+var g_baseUrl = "http://localhost:8080";
 
 function onInit()
 {
@@ -107,7 +107,7 @@ async function httpPostAsync(theUrl, payload, callback)
     let response = await fetch(theUrl, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json; charset=utf-8'
+            'Content-Type': 'application/json'
         },
         body: JSON.stringify(payload)
     });

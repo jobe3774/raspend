@@ -35,7 +35,7 @@ class RaspendHttpRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
         return
 
-    def verifyContentType(self, desiredType, desiredCharset):
+    def verifyContentType(self, desiredType, desiredCharset=""):
         """ Check if 'Content-Type' contains what we want.
         """
         content_type = self.headers.get('Content-Type')
@@ -48,7 +48,11 @@ class RaspendHttpRequestHandler(BaseHTTPRequestHandler):
         charset = parts[1] if len(parts) > 1 else ""
         
         isDesiredMediaType = True if mediatype.lower() == desiredType.lower() else False
-        isDesiredCharset   = True if desiredCharset.lower() in charset.lower() else False
+
+        if len(desiredCharset):
+            isDesiredCharset = True if desiredCharset.lower() in charset.lower() else False
+        else:
+            isDesiredCharset = True
         
         return isDesiredMediaType and isDesiredCharset
 
@@ -91,8 +95,8 @@ class RaspendHttpRequestHandler(BaseHTTPRequestHandler):
             self.send_error(501, "No commands available.")
             return
 
-        if self.verifyContentType("application/json", "utf-8") == False:
-            self.send_error(415, "Invalid media type! Expecting 'application/json' using character set 'utf-8'")
+        if self.verifyContentType("application/json") == False:
+            self.send_error(415, "Invalid media type! Expecting 'application/json'.")
             return
 
         content_length = int(self.headers.get('Content-Length', 0))
