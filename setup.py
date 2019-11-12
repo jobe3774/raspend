@@ -12,7 +12,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="raspend",
-    version="2.0.0",
+    version="2.0.1",
     author="Joerg Beckers",
     author_email="pypi@jobe-software.de",
     description="A lightweight web service framework.",
