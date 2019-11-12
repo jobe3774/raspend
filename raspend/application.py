@@ -12,9 +12,7 @@ import time
 
 from .http import RaspendHTTPServerThread
 from .utils import serviceshutdownhandling as ServiceShutdownHandling
-from .utils import dataacquisition as DataAcquisition
 from .utils import commandmapping as CommandMapping
-from .utils import publishing as Publishing
 from .utils import workerthreads as WorkerThreads
 
 class RaspendApplication():
@@ -23,115 +21,70 @@ class RaspendApplication():
 
     def __init__(self, port=None, sharedDict=None):
         # The server port
-        self.__port = port
+        self._port = port
 
         # A list holding instances of worker threads.
-        self.__workers = list()
+        self._workers = list()
 
         # The dictionary holding user's commands he wants to expose.
-        self.__cmdMap = CommandMapping.CommandMap()
+        self._cmdMap = CommandMapping.CommandMap()
 
         # A shared dictionary for the data acquisition threads and the HTTP server thread.
         if not sharedDict is None:
-            self.__sharedDict = sharedDict
+            self._sharedDict = sharedDict
         else:
-            self.__sharedDict = dict()
+            self._sharedDict = dict()
         
         # Event used for proper shutting down our threads.
-        self.__shutdownFlag = threading.Event()
+        self._shutdownFlag = threading.Event()
         
         # A lock object for synchronizing access to data within acquistion handlers and the HTTP request handler.
-        self.__dataLock = threading.Lock()
+        self._dataLock = threading.Lock()
         
-    def createDataAcquisitionThread(self, dataAcquisitionHandler, threadSleep=1):
-        """ This method creates a new instance of 'DataAcquisition.DataAcquisitionThread'.
-            Make sure that the handler you provide is derived from 'DataAcquisition.DataAcquisitionHandler'!
-        """
-        if not isinstance(dataAcquisitionHandler, DataAcquisition.DataAcquisitionHandler):
-            raise TypeError("Your 'DataAcquisitionHandler' must be derived from 'DataAcquisition.DataAcquisitionHandler'!")
-        
-        dataAcquisitionHandler.setSharedDict(self.__sharedDict)
-
-        dataThread = DataAcquisition.DataAcquisitionThread(threadSleep, 
-                                                           self.__shutdownFlag, 
-                                                           self.__dataLock, 
-                                                           dataAcquisitionHandler)
-        self.__workers.append(dataThread)
-
-        return len(self.__workers)
-
-    def createPublishDataThread(self, publishDataHandler, threadSleep=1):
-        """ This method creates a new instance of 'Publishing.PublishDataThread'.
-            Make sure that the handler you provide is derived from 'Publishing.PublishDataHandler'!
-        """
-        if not isinstance(publishDataHandler, Publishing.PublishDataHandler):
-            raise TypeError("Your 'PublishDataHandler' must be derived from 'Publishing.PublishDataHandler'!")
-        
-        publishDataHandler.setSharedDict(self.__sharedDict)
-
-        publishDataThread = Publishing.PublishDataThread(threadSleep, 
-                                                         self.__shutdownFlag, 
-                                                         self.__dataLock, 
-                                                         publishDataHandler)
-        self.__workers.append(publishDataThread)
-
-        return len(self.__workers)
-
-    def createScheduledPublishDataThread(self, publishDataHandler, scheduledStartTime, repetionType):
-        """ This method creates a new instance of 'Publishing.ScheduledPublishDataThread'.
-            Make sure that the handler you provide is derived from 'Publishing.PublishDataHandler'!
-        """
-        if not isinstance(publishDataHandler, Publishing.PublishDataHandler):
-            raise TypeError("Your 'PublishDataHandler' must be derived from 'Publishing.PublishDataHandler'!")
-        
-        publishDataHandler.setSharedDict(self.__sharedDict)
-
-        scheduledPublishDataThread = Publishing.ScheduledPublishDataThread(scheduledStartTime, 
-                                                                           repetionType, 
-                                                                           self.__shutdownFlag, 
-                                                                           self.__dataLock, 
-                                                                           publishDataHandler)
-        self.__workers.append(scheduledPublishDataThread)
-
-        return len(self.__workers)
-
     def createWorkerThread(self, threadHandler, waitTimeout):
+        """ This method creates a 'normal' worker thread.
+            Make sure your thread handler is derived from 'WorkerThreads.ThreadHandlerBase'.
+        """
         if not isinstance(threadHandler, WorkerThreads.ThreadHandlerBase):
             raise TypeError("Your 'threadHandler' must be derived from 'WorkerThreads.ThreadHandlerBase'!")
 
-        threadHandler.setSharedDict(self.__sharedDict)
-        worker = WorkerThreads.WorkerThread(self.__shutdownFlag, self.__dataLock, threadHandler, waitTimeout)
-        self.__workers.append(worker)
-        return len(self.__workers)
+        threadHandler.setSharedDict(self._sharedDict)
+        worker = WorkerThreads.WorkerThread(self._shutdownFlag, self._dataLock, threadHandler, waitTimeout)
+        self._workers.append(worker)
+        return len(self._workers)
 
     def createScheduledWorkerThread(self, threadHandler, scheduledTime, scheduledDate=None, repetitionType=None, repetitionFactor=1):
+        """ This method creates a scheduled worker thread. It takes a start time and date. 
+            Furthermore it takes a repetition type and factor to control by what frequency every iteration of the thread should be done.
+            Make sure your thread handler is derived from 'WorkerThreads.ThreadHandlerBase'.
+        """
         if not isinstance(threadHandler, WorkerThreads.ThreadHandlerBase):
             raise TypeError("Your 'threadHandler' must be derived from 'WorkerThreads.ThreadHandlerBase'!")
 
-        threadHandler.setSharedDict(self.__sharedDict)
-        worker = WorkerThreads.ScheduledWorkerThread(self.__shutdownFlag, 
-                                                     self.__dataLock, 
+        threadHandler.setSharedDict(self._sharedDict)
+        worker = WorkerThreads.ScheduledWorkerThread(self._shutdownFlag, 
+                                                     self._dataLock, 
                                                      threadHandler, 
                                                      scheduledTime, 
                                                      scheduledDate, 
                                                      repetitionType, 
                                                      repetitionFactor)
-        self.__workers.append(worker)
-        return len(self.__workers)
+        self._workers.append(worker)
+        return len(self._workers)
 
     def addCommand(self, callbackMethod):
         """ Adds a new command to the command map of your application.
         """
-        self.__cmdMap.add(CommandMapping.Command(callbackMethod))
+        self._cmdMap.add(CommandMapping.Command(callbackMethod))
 
-        return len(self.__cmdMap)
+        return len(self._cmdMap)
 
     def updateSharedDict(self, other):
         """ Updates the shared dictionary with 'other'. 
             Note: existing keys will be overwritten!
         """
-        self.__sharedDict.update(other)
-        return len(self.__sharedDict)
+        self._sharedDict.update(other)
+        return len(self._sharedDict)
 
     def run(self):
         """ Run the main loop of your application.
@@ -142,12 +95,12 @@ class RaspendApplication():
 
             httpd = None
             # The HTTP server thread - our HTTP interface
-            if self.__port != None:
-                httpd = RaspendHTTPServerThread(self.__shutdownFlag, self.__dataLock, self.__sharedDict, self.__cmdMap, self.__port)
+            if self._port != None:
+                httpd = RaspendHTTPServerThread(self._shutdownFlag, self._dataLock, self._sharedDict, self._cmdMap, self._port)
                 # Start our threads.
                 httpd.start()
 
-            for worker in self.__workers:
+            for worker in self._workers:
                 worker.start()
 
             # Keep primary thread or main loop alive.
@@ -156,10 +109,10 @@ class RaspendApplication():
 
         except ServiceShutdownHandling.ServiceShutdownException:
             # Signal the shutdown flag, so the threads can quit their work.
-            self.__shutdownFlag.set()
+            self._shutdownFlag.set()
 
             # Wait for all threads to end.
-            for worker in self.__workers:
+            for worker in self._workers:
                 worker.join()
 
             if httpd:

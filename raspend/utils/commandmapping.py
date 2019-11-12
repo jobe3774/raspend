@@ -31,16 +31,16 @@ class CallbackFunction():
     """
 
     def __init__(self, callbackFunction):
-        self.__function = callbackFunction
-        self.__name = callbackFunction.__name__
-        self.__signature = inspect.signature(callbackFunction)
-        self.__objName = self.__findObjectName()
+        self._function = callbackFunction
+        self._name = callbackFunction.__name__
+        self._signature = inspect.signature(callbackFunction)
+        self._objName = self._findObjectName()
 
-    def __findObjectName(self):
+    def _findObjectName(self):
         """
         Determines the variable name of the object whose method was supplied to this instance of class 'CallbackFunction'.
         """
-        objToFind = self.__function.__self__
+        objToFind = self._function.__self__
         currStack = inspect.stack()
         for stackFrame in currStack[2:]:
             # Make a copy of the keys to prevent runtime errors because of changes to the dictionary during iteration.
@@ -56,23 +56,23 @@ class CallbackFunction():
         Returns the name of this instance of class 'CallbackFunction', which is the variable name of the object whose method
         was supplied to this instance and the name of the method itself divided by a period.
         """
-        if len(self.__objName):
-            return self.__objName + "." + self.__name
+        if len(self._objName):
+            return self._objName + "." + self._name
         else:
             # We should never come here!
-            return self.__function.__qualname__
+            return self._function.__qualname__
 
     def hasParameter(self, parameterName):
         """
         Checks if the signature of the supplied callback method contains 'parameterName'.
         """
-        return parameterName in self.__signature.parameters.keys()
+        return parameterName in self._signature.parameters.keys()
 
     def getParameters(self):
         """
         Returns a dictionary containing the arguments of the supplied callback method.
         """
-        return self.__signature.parameters;
+        return self._signature.parameters;
 
     def invoke(self, args):
         """
@@ -83,7 +83,7 @@ class CallbackFunction():
         for key in args.keys():
             if not self.hasParameter(key):
                 raise KeyError("No argument '{0}' found!".format(key))
-        return self.__function(**args)
+        return self._function(**args)
 
 class Command():
     """
@@ -91,14 +91,14 @@ class Command():
     """
 
     def __init__(self, callback):
-        self.__callback = CallbackFunction(callback)
-        self.__name = self.__callback.getName()
+        self._callback = CallbackFunction(callback)
+        self._name = self._callback.getName()
 
     def getName(self):
         """
         Returns the full name of callback wrapped by this instance.
         """
-        return self.__name
+        return self._name
 
     def describe(self, asJSON):
         """
@@ -106,9 +106,9 @@ class Command():
         """
         d = dict()
         d["Command"] = dict()
-        d["Command"]["Name"] = self.__name
+        d["Command"]["Name"] = self._name
         d["Command"]["Args"] = dict()
-        params = self.__callback.getParameters()
+        params = self._callback.getParameters()
         for p in params:
             param = params[p]
             d["Command"]["Args"][param.name] = param.annotation if param.annotation != inspect.Parameter.empty else ""
@@ -121,7 +121,7 @@ class Command():
         """
         Accepts a dictionary containing the arguments for the callback function. 'key' is an argument's name and 'value' is the value.
         """
-        return self.__callback.invoke(args)
+        return self._callback.invoke(args)
 
 class CommandMap(dict):
     """

@@ -12,10 +12,10 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="raspend",
-    version="1.4.0",
+    version="2.0.0",
     author="Joerg Beckers",
     author_email="pypi@jobe-software.de",
-    description="A small and easy to use HTTP backend framework for the Raspberry Pi which is ideal for small to medium-sized home automation projects.",
+    description="A lightweight web service framework.",
     license="MIT",
     long_description=long_description,
     long_description_content_type="text/markdown",

@@ -1,51 +1,68 @@
-# raspend - a small and easy to use HTTP backend framework for the Raspberry Pi
-
-First of all, it should be mentioned that **raspend** was originally intended to be a backend framework for the Raspberry Pi, but since it was written entirely in Python, it can be used on any platform with a Python interpreter. 
-
-As you can imagine **raspend** is the abbreviation for **rasp**berry back**end**.
+# raspend - a lightweight web service framework
 
 ## Motivation
 
-Since I am doing a lot of home automation stuff on the Raspberry Pi and since the third Python script for that had the same structure, I decided to create an easy to use framework to simplify my life for when I start my next project on my RPi. May the framework support you in developing great applications on the RPi or on any other platform.
+Since I am doing a lot of home automation stuff on my Raspberry Pi and since the third Python script for that had the same structure, I decided, strictly following the [DRY principle](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself), to create an easy to use framework to simplify my life for when I start my next project on my RPi.
 
-## Now, what does this framework provide?
+## Introduction
 
-As 'backend' already suggests, this framework provides you with an easy way of creating a small HTTP web service on your RPi. The **RaspendApplication** class runs the **RaspendHTTPServerThread**, which is based on Python's **HTTPServer** class, to handle incoming HTTP requests. Besides that, this framework provides you with an easy way of acquiring data (e.g. temperatures measurements) in a multithreaded way.
+It should be mentioned that **raspend**, which is the abbreviation for **rasp**berry back**end**, was originally intended to be a web service framework for the Raspberry Pi. But since it's written entirely in Python and has no RPi specific code or dependencies, it can be used on any platform having a Python interpreter installed.
 
-### Multithreading kept simple
+**raspend** combines two core features. The first is the data processing part, where one or more threads share the same *dictionary* they read from or write to. The data contained in this shared dictionary is exposed to the outside world through an HTTP interface as a JSON string. Therefore the HTTP interface provides the */data* endpoint. The second feature is providing an easy to use interface, which lets you invoke your self-defined commands via the already mentioned HTTP interface. (see [How to use the HTTP interface](#how-to-use-the-http-interface) for more details)
 
-The one idea is, that all threads you create use the same shared dictionary to store their data. The HTTP server thread as well knows this shared dictionary and exposes it as a JSON string via HTTP GET requests.
+**raspend** comes with a ready-to-use application class called **RaspendApplication**. It manages your threads, your commands and the HTTP interface. Pass the port number, the HTTP interface should listen on, to the constructor of **RaspendApplication**. If you don't want to expose any data or invoke any commands on your system via HTTP interface, you can put **RaspendApplication** into "offline" mode by passing *None* instead of a port number. 
 
-With raspend, creating threads is really simple and straight forward. All you need to do is, derive the **ThreadHandlerBase** class and implement the abstract methods *prepare* and *invoke*. The *prepare* method is called before the thread loop starts, while *invoke* will be called for every iteration of the thread loop. For tasks like cyclic reading temperature measurements you can use the **createWorkerThread** method of **RaspendApplication** to create a normal worker thread. **createWorkerThread** takes an instance of your thread handler and a timeout value in seconds as parameters. The thread will sleep for *timeout* seconds past every iteration.
+When all initialization stuff is done (adding commands, creating threads), then you start your application by calling the **run** method of **RaspendApplication**. The **RaspendApplication** class installs signal handlers for SIGTERM and SIGINT, so you can quit your application by pressing CTRL+C or sending one of the signals via the **kill** command of your shell. 
 
-If you want a thread or task to do its work in a more scheduled way, such as run once a day, then you can use the **createScheduledWorkerThread** method of **RaspendApplication**. **createScheduleWorkerThread**, like **createWorkerThread**, takes an instance of your thread handler. But instead taking a timeout, you have to pass a start time, a start date, the type of repetition and repetition factor. If the start date is *None*, the current date will be used. If *repetitionType* is *None*, it defaults to **ScheduleRepetitionType.DAILY**. The repetition factor is applied to the repetition type. For example, if you need to write your temperature measurements to a file every 4 hours starting immediately, you would choose **ScheduleRepetitionType.HOURLY** with a repetition factor set to 4.
+## Data processing with **raspend**
+
+With **raspend**, creating threads is really simple and straight forward. All you need to do is, derive the **ThreadHandlerBase** class and implement the abstract methods *prepare* and *invoke*. The *prepare* method is called before the thread loop starts, while *invoke* will be called for every iteration of the thread loop. For tasks like cyclic reading temperature measurements or checking the CPU performance or something like that, you can use the **createWorkerThread** method of the **RaspendApplication** class. It takes an instance of your thread handler and a timeout value in seconds as parameters. The thread will sleep for *timeout* seconds past every iteration.
+
+If you want a thread or task to do its work in a more scheduled way, such as run once a day, then you can use the **createScheduledWorkerThread** method of the **RaspendApplication** class. **createScheduledWorkerThread**, like **createWorkerThread**, takes an instance of your thread handler. But instead taking a timeout, you have to pass a start time, a start date, the type of repetition and a repetition factor. Start time and date can be *None*. If so, the current time and date will be used. If *repetitionType* is *None*, it defaults to **ScheduleRepetitionType.DAILY**. The repetition factor is applied to the repetition type and defaults to 1. For example, if you need to write your temperature measurements to a file every 15 minutes starting immediately, you would choose **ScheduleRepetitionType.MINUTELY** with a repetition factor set to 15 and start time and date set to *None*.
 
 ``` python
+from raspend import RaspendApplication, ThreadHandlerBase, ScheduleRepetitionType
+
+class ReadOneWireTemperature(ThreadHandlerBase):
+    ...
+
+class PublishOneWireTemperatures(ThreadHandlerBase):
+    ...
+
+class WriteOneWireTemperaturesToFile(ThreadHandlerBase):
+    ...
+
+# Create instance of the application class passing a port number for the HTTP interface.
 myApp = RaspendApplication(args.port)
 
-myApp.createWorkerThread(ReadOneWireTemperature("basement", "party_room", "/sys/bus/w1/devices/23-000000000001/w1_slave"), 60)
-myApp.createWorkerThread(ReadOneWireTemperature("basement", "heating_room", "/sys/bus/w1/devices/23-000000000002/w1_slave"), 60)
-myApp.createWorkerThread(ReadOneWireTemperature("basement", "fitness_room", "/sys/bus/w1/devices/23-000000000003/w1_slave"), 60)
-myApp.createWorkerThread(ReadOneWireTemperature("ground_floor", "kitchen", "/sys/bus/w1/devices/23-000000000004/w1_slave"), 60)
-myApp.createWorkerThread(ReadOneWireTemperature("ground_floor", "living_room", "/sys/bus/w1/devices/23-000000000005/w1_slave"), 60)
+# Create worker threads for reading every temperature sensor once a minute.
+myApp.createWorkerThread(ReadOneWireTemperature("basement", "party_room", "/sys/.../w1_slave"), 60)
+myApp.createWorkerThread(ReadOneWireTemperature("basement", "heating_room", "/sys/.../w1_slave"), 60)
+myApp.createWorkerThread(ReadOneWireTemperature("basement", "fitness_room", "/sys/.../w1_slave"), 60)
+myApp.createWorkerThread(ReadOneWireTemperature("ground_floor", "kitchen", "/sys/.../w1_slave"), 60)
+myApp.createWorkerThread(ReadOneWireTemperature("ground_floor", "living_room", "/sys/.../w1_slave"), 60)
 
-myApp.createWorkerThread(PublishOneWireTemperatures("http://localhost/raspend_demo/api/post_data.php", username, password), 60)
+# Publish temperatures to MySQL database every minute.
+endPointURL = "http://localhost/raspend_demo/api/post_data.php"
+myApp.createWorkerThread(PublishOneWireTemperatures(endPointURL, username, password), 60)
 
+# Write temperatures to 1wire.csv every 15 minutes.
 myApp.createScheduledWorkerThread(WriteOneWireTemperaturesToFile("./1wire.csv"), 
                                   None, 
                                   None, 
-                                  ScheduleRepetitionType.HOURLY, 
-                                  4)
+                                  ScheduleRepetitionType.MINUTELY, 
+                                  15)
 
+# Run main loop.
 myApp.run()
 ```
 
-### Expose methods you want to call from remote
+## Making commands invocable with **raspend**
 
-The other idea of this framework is to expose different functionalities, such as switching on/off your door bell via GPIO, as a command you can send to your RPi via HTTP POST request. All you have to do is to encapsulate the functionality you want to make available to the outside world into a method of a Python class. Then instantiate your class and call the **addCommand** method of **RaspendApplication** providing the method you want to expose. Now you can execute your method using a simple HTTP POST request. 
+As mentioned earlier, **raspend's** second core feature is providing an easy way to let you invoke self-defined commands via its HTTP interface. Such a command must be implemented as a method of a Python class. This method then has to be passed to the **addCommand** method of **RaspendApplication**. You now can call this method with a simple HTTP GET or POST request. 
 
 ``` python
-from raspend.application import RaspendApplication
+from raspend import RaspendApplication
 
 class DoorBell():
     def __init__(self, *args, **kwargs):
@@ -63,30 +80,31 @@ class DoorBell():
     def getCurrentState(self):
         return self.doorBellState
 
-myApp = RaspendApplication(8080)
+# Create instance of the application class passing a port number for the HTTP interface.
+myApp = RaspendApplication(args.port)
 
+# Create instance of the class whos methods will be made invocable via HTTP interface.
 theDoorBell = DoorBell()
 
+# Add the methods as a command.
 myApp.addCommand(theDoorBell.switchDoorBell)
 myApp.addCommand(theDoorBell.getCurrentState)
 
+# Run main loop.
 myApp.run()
-
 ``` 
 
-When all initialization stuff is done (adding commands, creating threads), then you start your application by calling the **run** method of **RaspendApplication**. The **RaspendApplication** class installs signal handlers for SIGTERM and SIGINT, so you can quit your application by pressing CTRL+C or sending one of the signals via the **kill** command of your shell.
-
-Please have a look at the examples included in this project to get a better understanding. *example1.py* and *example2.py* show how to do most of the work yourself, while *example3.py* shows you the most convenient way of using this framework. *example4.py* is identical to *example3.py* but extended by a **PublishDataHandler**. *example5.py* extends *example4.py* with a **ScheduledPublishDataThread**.
+Please have a look at the examples included in this project. To see how I switch on/off my doorbell see [doorbell](https://github.com/jobe3774/doorbell). Another good example on how to use **raspend** is [mbpv](https://github.com/jobe3774/mbpv), which shows how I use **raspend's** worker threads to read out current values of my solar inverters. 
 
 ## How to use the HTTP interface?
 
 ### The data part
 
-As mentioned above, the data acquisition side of your web service writes its data to a shared dictionary. You can query this data by sending a HTTP GET request to **http://<your-raspberrypi's-ip:port>/data**. The **RaspendHTTPServerThread** then sends the whole shared dictionary as a JSON string. 
+As already mentioned, all worker threads share the same dictionary they read from or write to. You can query this data by sending a HTTP GET request to **http://<ip-of-your-system:port>/data**. The HTTP interface then responds with the whole shared dictionary as a JSON string. It is recommended not to write too much data in this dictionary, as this could reduce performance.
 
 Let's say you are measuring the temperatures of different rooms of your house, then the shared dictionary could have the following structure:
 
-```
+``` json
 {
     "basement" : {
         "party_room": 17.8,
@@ -95,31 +113,31 @@ Let's say you are measuring the temperatures of different rooms of your house, t
     },
     "ground_floor" : {
         "kitchen": 23.5,
-        "living_room", 23.6
+        "living_room": 23.6
     }
 }
 ```
 
 If you only want to know the temperatures of the ground floor you can request **/data/ground_floor**. Then the response would be:
 
-```
+``` json
 "ground_floor" : {
         "kitchen": 23.5,
-        "living_room", 23.6
+        "living_room": 23.6
     }
 ```
 
 Or if you only want to know the temperature of the fitness room in your basement you could use **/data/basement/fitness_room** and the response would be:
 
-```
+``` json
 19.5
 ```
 
 ### The command part
 
-Now let's have a look at the command interface of **raspend**. If you want to know which commands are available you can request **/cmds**. Then the response for the above mentioned example would be:
+Now let's have a look at the command interface of **raspend**. If you want to know which commands are available you can request **/cmds**. Then the response for the above mentioned *doorbell* example would be:
 
-```
+``` json
 {
   "Commands": [{
       "Command": {
@@ -137,9 +155,11 @@ Now let's have a look at the command interface of **raspend**. If you want to kn
 }
 ```
 
-As you can see in the response above, your variable names should be in a more descriptive manner, since the instance of your Python class is used instead of the class name. 
+As you can see in the response above, your variable names should be in a more descriptive manner, since the instance of your Python class is used instead of the class name. Among other things, this allows us to have more than one instance of the respective class. 
 
-You invoke a command by sending it's call information as described in the list above via HTTP POST request. Here an JavaScript example:
+You invoke a command by sending it's call information as described in the list above via HTTP POST request. 
+
+Here a JavaScript example:
 
 ``` javascript
 
@@ -152,7 +172,7 @@ let payload = {
     }
 };
 
-let response = await fetch(theUrl, {
+let response = await fetch("http://localhost:8080", {
     method: 'POST',
     headers: {
         'Content-Type': 'application/json; charset=utf-8'
@@ -167,9 +187,9 @@ if (response.status == 200) {
     
 ``` 
 
-The **RaspendHTTPServerThread** receives
+The HTTP interface receives
 
-``` 
+``` json
 {
   "Command": {
     "Name": "theDoorBell.switchDoorBell",
@@ -180,9 +200,9 @@ The **RaspendHTTPServerThread** receives
 }
 ``` 
 
-and invokes the method. The response of this HTTP POST request will be your JSON enhanced with the result of the method invocation:
+and invokes the method. The response of this HTTP POST request will be **your** JSON enhanced with the result of the method invocation:
 
-``` 
+``` json
 {
   "Command": {
     "Name": "theDoorBell.switchDoorBell",
@@ -195,19 +215,19 @@ and invokes the method. The response of this HTTP POST request will be your JSON
 ``` 
 Since remain untouched, you can attach any other information with that command such as an element-id of your frontend invoking it.
 
-Starting with version 1.1.0, you can also use HTTP GET requests to invoke commands. The request has to following structure:
+Starting with version 1.1.0, you can also use HTTP GET requests to invoke commands. The request has the following structure:
 
-```
+``` 
  /cmd?name=command&arg1=val1&arg2=val2...&argN=valN
 ```
 
 So for the above mentioned example **theDoorBell.switchDoorBell**, the correct request would be:
 
-```
+``` 
  /cmd?name=theDoorBell.switchDoorBell&onoff=off
 ```
 
-The **RaspendHTTPServerThread** invokes the command and responds with the result of the invocation as a JSON string.
+The HTTP interface invokes the command and responds with the result of the invocation as a JSON string.
 
 ## How to install?
 
@@ -222,6 +242,17 @@ or if Python 3 isn't the default use
 $ pip3 install raspend
 ```
 to install the package.
+
+## Remarks
+
+There is a breaking change from version 1.4.0 to 2.0.0. The modules called **DataAcquisition** and **Publishing** fell victim to the DRY principle and have been replaced by the worker threads. This also means that the following methods have been removed from the **RaspendApplication** class: 
+* **createDataAcquisitionThread**
+* **createPublishDataThread**
+* **createScheduledPublishDataThread**
+
+Please use **createWorkerThread** or **createScheduledWorkerThread** instead. 
+
+Migration should be easy. Just replace all derivations of **DataAcquisitionHandler** and **PublishDataHandler** by **ThreadHandlerBase**. Remove all ```from raspend.utils import dataacquisition as DataAcquisition``` and  ```from raspend.utils import publishing as Publishing``` and use ```from raspend import ThreadHandlerBase``` instead. In your implementations of **DataAcquisitionHandler** rename the **acquireData** method to **invoke**. In your implementations of **PublishDataHandler** rename the **publishData** method to **invoke** as well. 
 
 ## License
 

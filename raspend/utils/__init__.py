@@ -5,4 +5,4 @@
 #  
 #  Copyright (c) 2019 Joerg Beckers
 
-__all__ = ["commandmapping", "dataacquisition", "serviceshutdownhandling", "stoppablehttpserver"]
+__all__ = ["commandmapping", "serviceshutdownhandling", "stoppablehttpserver", "workerthreads"]
