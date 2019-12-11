@@ -272,6 +272,8 @@ class RaspendHttpRequestHandler(BaseHTTPRequestHandler):
         except BlockingIOError:
             self.send_error(500)
 
+        return
+
 class RaspendHTTPServerThread(stoppablehttpserver.StoppableHttpServerThread):
     """ The raspend server thread using 'RaspendHttpRequestHandler' for request handling
     """

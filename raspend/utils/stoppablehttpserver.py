@@ -10,16 +10,20 @@
 import threading
 import time
 from http.server import HTTPServer
+from socketserver import ThreadingMixIn
 
-class StoppableHttpServer(HTTPServer):
+class StoppableHttpServer(ThreadingMixIn, HTTPServer):
     def __init__(self, server_address, RequestHandlerClass, shutdownFlag=None):
+        super().__init__(server_address, RequestHandlerClass)
         self.shutdownFlag = shutdownFlag
-        return super().__init__(server_address, RequestHandlerClass)
+        self.daemon_threads = False
+        self._block_on_close = False
 
     def serve_forever(self):
         self.socket.settimeout(0.5)
         while not self.shutdownFlag.is_set():
             self.handle_request()
+        self.server_close()
 
 class StoppableHttpServerThread(threading.Thread):
     def __init__(self, 
