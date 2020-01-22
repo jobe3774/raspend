@@ -19,14 +19,25 @@ class ThreadHandlerBase(ABC):
         for every loop iteration. Every thread and therefore every handler instance
         uses the same shared dictionary to read and write it's data. 
     """
-    def __init__(self, sharedDict=None):
-        self.setSharedDict(sharedDict)
+    def __init__(self):
         return super().__init__()
 
     def setSharedDict(self, sharedDict):
         """ Sets the shared dictionary.
         """
         self.sharedDict = sharedDict
+
+    def setShutdownFlag(self, shutdownFlag):
+        """ Supplies the handler with the application's shutdown flag.
+            Use this shutdown flag for aborting loops within 'invoke'. 
+            For example if you are reading a serial port in a loop, you should always check this flag. 
+        """
+        self.shutdownFlag = shutdownFlag
+
+    def aborted(self):
+        """ Convenience function for checking the shutdown flag.
+        """
+        return self.shutdownFlag.is_set()
 
     @abstractmethod
     def prepare(self):

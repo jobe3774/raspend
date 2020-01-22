@@ -49,6 +49,7 @@ class RaspendApplication():
             raise TypeError("Your 'threadHandler' must be derived from 'WorkerThreads.ThreadHandlerBase'!")
 
         threadHandler.setSharedDict(self._sharedDict)
+        threadHandler.setShutdownFlag(self._shutdownFlag)
         worker = WorkerThreads.WorkerThread(self._shutdownFlag, self._dataLock, threadHandler, waitTimeout)
         self._workers.append(worker)
         return len(self._workers)
@@ -62,6 +63,7 @@ class RaspendApplication():
             raise TypeError("Your 'threadHandler' must be derived from 'WorkerThreads.ThreadHandlerBase'!")
 
         threadHandler.setSharedDict(self._sharedDict)
+        threadHandler.setShutdownFlag(self._shutdownFlag)
         worker = WorkerThreads.ScheduledWorkerThread(self._shutdownFlag, 
                                                      self._dataLock, 
                                                      threadHandler, 
