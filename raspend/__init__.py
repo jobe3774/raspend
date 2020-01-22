@@ -3,7 +3,7 @@
 #  
 #  License: MIT
 #  
-#  Copyright (c) 2019 Joerg Beckers
+#  Copyright (c) 2020 Joerg Beckers
 
 __all__ = ["http", "application"]
 

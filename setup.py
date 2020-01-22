@@ -3,7 +3,7 @@
 #  
 #  License: MIT
 #  
-#  Copyright (c) 2019 Joerg Beckers
+#  Copyright (c) 2020 Joerg Beckers
 
 import setuptools
 
@@ -12,7 +12,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="raspend",
-    version="2.0.1",
+    version="2.0.2",
     author="Joerg Beckers",
     author_email="pypi@jobe-software.de",
     description="A lightweight web service framework.",
