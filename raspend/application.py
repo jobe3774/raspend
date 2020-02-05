@@ -38,7 +38,7 @@ class RaspendApplication():
         # Event used for proper shutting down our threads.
         self._shutdownFlag = threading.Event()
         
-        # A lock object for synchronizing access to data within acquistion handlers and the HTTP request handler.
+        # A lock object for synchronizing access to data within thread handlers and the HTTP request handler.
         self._dataLock = threading.Lock()
         
     def createWorkerThread(self, threadHandler, waitTimeout):
@@ -87,6 +87,21 @@ class RaspendApplication():
         """
         self._sharedDict.update(other)
         return len(self._sharedDict)
+
+    def getSharedDict(self):
+        """ Returns a reference to the shared dictionary used inside of this instance of RaspendApplication.
+        """
+        return self._sharedDict
+
+    def getShutdownFlag(self):
+        """ Returns a reference to the event object used for shutdown.
+        """
+        return self._shutdownFlag
+
+    def getAccessLock(self):
+        """ Returns a reference to the lock object used for synchronizing access to the shared dictionary.
+        """
+        return self._dataLock
 
     def run(self):
         """ Run the main loop of your application.
