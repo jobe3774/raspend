@@ -139,22 +139,24 @@ Now let's have a look at the command interface of **raspend**. If you want to kn
 
 ``` json
 {
-	"Commands": [{
-			"Command": {
-				"Name": "theDoorBell.switchDoorBell",
-				"Args": {
-					"onoff": "set to 'on' or 'off' without quotation marks"
-				},
-				"URL": "/cmd?name=theDoorBell.switchDoorBell&onoff="
-			}
-		}, {
-			"Command": {
-				"Name": "theDoorBell.getCurrentState",
-				"Args": {},
-				"URL": "/cmd?name=theDoorBell.getCurrentState"
-			}
-		}
-	]
+  "Commands": [
+    {
+      "Command": {
+        "Name": "theDoorBell.switchDoorBell",
+        "Args": {
+          "onoff": "set to 'on' or 'off' without quotation marks"
+        },
+        "URL": "/cmd?name=theDoorBell.switchDoorBell&onoff="
+      }
+    },
+    {
+      "Command": {
+        "Name": "theDoorBell.getCurrentState",
+        "Args": {},
+        "URL": "/cmd?name=theDoorBell.getCurrentState"
+      }
+    }
+  ]
 }
 ```
 
