@@ -21,7 +21,7 @@ class DoorBell():
     def __init__(self, *args, **kwargs):
         self.doorBellState = "on"
 
-    def switchDoorBell(self, onoff):
+    def switchDoorBell(self, onoff: "set to 'on' or 'off' without quotation marks"):
         if type(onoff) == str:
             self.doorBellState = "on" if onoff == "on" else "off"
         elif type(onoff) == int:

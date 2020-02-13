@@ -179,7 +179,12 @@ class RaspendHttpRequestHandler(BaseHTTPRequestHandler):
         cmds = dict()
         cmds["Commands"] = []
         for cmd in self.commandMap.values():
-            cmds["Commands"].append(cmd.describe(False))
+            desc = cmd.describe(False)
+            cmdURL = "/cmd?name={}".format(desc["Command"]["Name"])
+            for arg in desc["Command"]["Args"]:
+                cmdURL = cmdURL + "&{}=".format(arg)
+            desc["Command"]["URL"] = cmdURL
+            cmds["Commands"].append(desc)
 
         strJsonResponse = json.dumps(cmds, ensure_ascii=False)
 
